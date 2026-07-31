@@ -148,7 +148,9 @@ Health check: `GET /api/health`
 
 1. Import the repo in Vercel and set **root directory** to `frontend`.
 2. Framework preset: **Vite**.
-3. Set `VITE_API_URL` to your Render backend URL, or add a `/api/*` rewrite.
+3. `vercel.json` already proxies `/api/*` → your Render backend, so API calls stay
+   same-origin (no CORS problems, refresh cookies keep working). Just update the
+   destination in `vercel.json` if your backend URL changes.
 4. Deploy, then update the backend's `CLIENT_URL` to the live Vercel URL (CORS).
 
 ## Roadmap
