@@ -2,6 +2,11 @@ import nodemailer from "nodemailer";
 
 let transporter = null;
 
+// Set to true when SMTP is unavailable (e.g. free Render plans without SMTP).
+// Auth flows then fall back to printing the OTP in the logs so they keep
+// working until real SMTP credentials are configured.
+let consoleFallbackActive = false;
+
 const SMTP_TIMEOUTS = {
   connectionTimeout: 15000,
   greetingTimeout: 15000,
@@ -42,9 +47,13 @@ const getTransporter = async () => {
   }
 
   if (process.env.NODE_ENV === "production") {
-    console.error(
-      "[EMAIL] SMTP credentials are not configured. Verification emails will NOT be sent."
-    );
+    if (!consoleFallbackActive) {
+      console.error(
+        "[EMAIL] SMTP credentials are not configured. Verification emails will NOT be sent; " +
+          "OTP codes are printed in the server logs instead. Set SMTP_* env vars for real delivery."
+      );
+    }
+    consoleFallbackActive = true;
     return null;
   }
 
@@ -72,7 +81,12 @@ const sendMail = async (to, subject, html) => {
   if (process.env.EMAIL_DISABLE === "true") return true;
 
   const transport = await getTransporter();
-  if (!transport) return false;
+  if (!transport) {
+    // No SMTP available (or connection failed). Fall back to console OTP
+    // delivery so register / forgot-password keep working on free hosts.
+    console.warn(`[EMAIL] No SMTP available for "${subject}" to ${to} — OTP delivered to console.`);
+    return true;
+  }
   try {
     const info = await transport.sendMail({
       from: process.env.EMAIL_FROM || "Pollify <no-reply@pollify.app>",
@@ -220,7 +234,7 @@ const buildOtpEmail = ({ header, greeting, body, otp, expiryMinutes, appName = "
 };
 
 const logOtp = (to, otp) => {
-  if (process.env.NODE_ENV !== "production") {
+  if (process.env.NODE_ENV !== "production" || consoleFallbackActive) {
     console.log(`[EMAIL] OTP for ${to}: ${otp} (valid 5 minutes)`);
   }
 };

@@ -26,10 +26,22 @@ export const getUserProfile = asyncHandler(async (req, res) => {
 
 // @route PUT /api/users/me
 export const updateProfile = asyncHandler(async (req, res) => {
-  const editableFields = ["name", "bio", "socialLinks"];
-  editableFields.forEach((field) => {
-    if (req.body[field] !== undefined) req.user[field] = req.body[field];
-  });
+  const { name, bio, socialLinks, username } = req.body;
+
+  if (username !== undefined) {
+    const cleanUsername = String(username).trim().toLowerCase();
+    if (!/^[a-zA-Z0-9_]{3,30}$/.test(cleanUsername)) {
+      throw new ApiError(400, "Username must be 3–30 characters: letters, numbers, underscores only.");
+    }
+    const taken = await User.findOne({ username: cleanUsername, _id: { $ne: req.user._id } });
+    if (taken) throw new ApiError(409, "This username is already taken.");
+    req.user.username = cleanUsername;
+  }
+
+  if (name !== undefined) req.user.name = String(name).trim();
+  if (bio !== undefined) req.user.bio = String(bio).trim();
+  if (socialLinks !== undefined) req.user.socialLinks = socialLinks;
+
   await req.user.save();
   res.status(200).json({ success: true, data: { user: req.user.toSafeObject() } });
 });
