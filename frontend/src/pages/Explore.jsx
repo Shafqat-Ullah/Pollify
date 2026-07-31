@@ -48,11 +48,11 @@ export default function Explore() {
           <h1 className="font-display font-bold text-2xl">
             {search ? (
               <>
-                Results for <span className="text-gradient">"{search}"</span>
+                Results for <span className="text-emerald-400">"{search}"</span>
               </>
             ) : (
               <>
-                Explore <span className="text-gradient">polls</span>
+                Explore <span className="text-emerald-400">polls</span>
               </>
             )}
           </h1>

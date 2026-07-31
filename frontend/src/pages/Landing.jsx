@@ -32,7 +32,7 @@ export default function Landing() {
           <h1 className="font-display font-extrabold text-4xl sm:text-5xl leading-tight mb-5">
             Ask your community.
             <br />
-            <span className="text-gradient">Watch it decide.</span>
+            <span className="text-emerald-400">Watch it decide.</span>
           </h1>
           <p className="text-zinc-400 text-lg mb-8 max-w-md">
             Pollify turns any question into a live, real-time vote — with results, discussion, and trends,
@@ -63,7 +63,7 @@ export default function Landing() {
             {liveOptions.map((opt) => (
               <div key={opt.label} className="relative rounded-xl border border-zinc-800 bg-zinc-800/50 p-3.5 overflow-hidden">
                 <motion.div
-                  className="absolute inset-y-0 left-0 bg-gradient-to-r from-emerald-500/25 to-teal-500/15"
+                  className="absolute inset-y-0 left-0 bg-emerald-500/15"
                   initial={{ width: 0 }}
                   animate={{ width: `${opt.pct}%` }}
                   transition={{ duration: 1, ease: "easeOut", delay: 0.4 }}

@@ -75,7 +75,7 @@ export default function Navbar() {
               <div className="relative">
                 <button
                   onClick={() => setMenuOpen((o) => !o)}
-                  className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center overflow-hidden ring-2 ring-zinc-700 hover:ring-emerald-500/60 transition-all"
+                  className="w-9 h-9 rounded-full bg-emerald-500 flex items-center justify-center overflow-hidden ring-2 ring-zinc-700 hover:ring-emerald-500/60 transition-all"
                   aria-label="Account menu"
                 >
                   {user.avatar?.url ? (

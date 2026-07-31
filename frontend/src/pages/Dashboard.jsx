@@ -25,7 +25,7 @@ export default function Dashboard() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="font-display font-bold text-2xl">
-            Welcome back, <span className="text-gradient">{user?.name?.split(" ")[0]}</span>
+            Welcome back, <span className="text-emerald-400">{user?.name?.split(" ")[0]}</span>
           </h1>
           <p className="text-zinc-500 text-sm mt-1">Here's what's happening with your polls.</p>
         </div>
