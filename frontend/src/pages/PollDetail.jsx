@@ -1,0 +1,179 @@
+import { useState } from "react";
+import { useParams, Link } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Heart, Bookmark, Share2, Flag, Send } from "lucide-react";
+import toast from "react-hot-toast";
+import { pollService } from "../services/pollService";
+import { useAuth } from "../contexts/AuthContext";
+import VoteOption from "../components/poll/VoteOption";
+import Button from "../components/ui/Button";
+
+export default function PollDetail() {
+  const { id } = useParams();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [selected, setSelected] = useState([]);
+  const [comment, setComment] = useState("");
+  const [voting, setVoting] = useState(false);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["poll", id],
+    queryFn: () => pollService.get(id),
+  });
+
+  const { data: commentsData } = useQuery({
+    queryKey: ["comments", id],
+    queryFn: () => pollService.getComments(id),
+    enabled: !!data,
+  });
+
+  if (isLoading) return <div className="text-muted text-sm">Loading poll...</div>;
+
+  const poll = data.data.poll;
+  const hasVoted = !!data.data.userVote;
+  const totalVotes = poll.totalVotes;
+
+  const handleSelect = (optionId) => {
+    if (hasVoted) return;
+    if (poll.type === "multiple") {
+      setSelected((prev) => (prev.includes(optionId) ? prev.filter((i) => i !== optionId) : [...prev, optionId]));
+    } else {
+      setSelected([optionId]);
+    }
+  };
+
+  const submitVote = async () => {
+    if (selected.length === 0) return toast.error("Select an option first.");
+    setVoting(true);
+    try {
+      await pollService.vote(id, selected);
+      toast.success("Vote cast!");
+      queryClient.invalidateQueries({ queryKey: ["poll", id] });
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Could not cast vote.");
+    } finally {
+      setVoting(false);
+    }
+  };
+
+  const handleLike = async () => {
+    if (!user) return toast.error("Log in to like polls.");
+    await pollService.like(id);
+    queryClient.invalidateQueries({ queryKey: ["poll", id] });
+  };
+
+  const handleBookmark = async () => {
+    if (!user) return toast.error("Log in to bookmark polls.");
+    await pollService.bookmark(id);
+    toast.success("Bookmark updated.");
+  };
+
+  const submitComment = async () => {
+    if (!comment.trim()) return;
+    try {
+      await pollService.addComment(id, comment.trim());
+      setComment("");
+      queryClient.invalidateQueries({ queryKey: ["comments", id] });
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Could not post comment.");
+    }
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto">
+      <div className="glass-card p-6 mb-6">
+        <div className="flex items-center gap-2 mb-3">
+          {poll.category && (
+            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-accent/10 text-accent">
+              {poll.category.name}
+            </span>
+          )}
+          {!poll.isAnonymous && poll.author && (
+            <Link to={`/profile/${poll.author.username}`} className="text-xs text-muted hover:text-primary">
+              by @{poll.author.username}
+            </Link>
+          )}
+        </div>
+
+        <h1 className="font-display font-bold text-2xl mb-2">{poll.title}</h1>
+        {poll.description && <p className="text-muted text-sm mb-6">{poll.description}</p>}
+
+        <div className="space-y-2.5 mb-5">
+          {poll.options.map((opt) => (
+            <VoteOption
+              key={opt._id}
+              option={opt}
+              percentage={totalVotes > 0 ? Number(((opt.votesCount / totalVotes) * 100).toFixed(1)) : 0}
+              isSelected={selected.includes(opt._id) || (hasVoted && data.data.userVote.selectedOptions.includes(opt._id))}
+              hasVoted={hasVoted}
+              onSelect={handleSelect}
+            />
+          ))}
+        </div>
+
+        {!hasVoted && poll.status === "published" && (
+          <Button onClick={submitVote} loading={voting} className="w-full mb-2">
+            Cast vote
+          </Button>
+        )}
+
+        <div className="flex items-center gap-4 pt-4 border-t border-border text-sm text-muted">
+          <span>{totalVotes} votes</span>
+          <button onClick={handleLike} className="flex items-center gap-1.5 hover:text-primary">
+            <Heart className="w-4 h-4" /> {poll.likesCount}
+          </button>
+          <button onClick={handleBookmark} className="flex items-center gap-1.5 hover:text-primary">
+            <Bookmark className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(window.location.href);
+              toast.success("Link copied.");
+            }}
+            className="flex items-center gap-1.5 hover:text-primary"
+          >
+            <Share2 className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => user ? pollService.report(id, "other").then(() => toast.success("Reported.")) : toast.error("Log in to report.")}
+            className="flex items-center gap-1.5 hover:text-red-400 ml-auto"
+          >
+            <Flag className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      <div className="glass-card p-6">
+        <h2 className="font-display font-semibold mb-4">Comments ({commentsData?.data.comments.length || 0})</h2>
+        {user && (
+          <div className="flex gap-2 mb-5">
+            <input
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder="Add a comment..."
+              className="input-field flex-1"
+              onKeyDown={(e) => e.key === "Enter" && submitComment()}
+            />
+            <Button onClick={submitComment}><Send className="w-4 h-4" /></Button>
+          </div>
+        )}
+        <div className="space-y-4">
+          {commentsData?.data.comments.map((c) => (
+            <div key={c._id} className="flex gap-3">
+              <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center shrink-0 text-xs font-bold text-white">
+                {c.author.name?.[0]?.toUpperCase()}
+              </div>
+              <div>
+                <p className="text-sm">
+                  <span className="font-medium">{c.author.name}</span>{" "}
+                  <span className="text-muted text-xs">@{c.author.username}</span>
+                </p>
+                <p className="text-sm text-text mt-0.5">{c.content}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
