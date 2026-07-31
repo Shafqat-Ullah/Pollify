@@ -4,6 +4,7 @@ import MainLayout from "./layouts/MainLayout";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import AdminRoute from "./routes/AdminRoute";
 
+import Landing from "./pages/Landing";
 import Explore from "./pages/Explore";
 import PollDetail from "./pages/PollDetail";
 import CreatePoll from "./pages/CreatePoll";
@@ -31,7 +32,7 @@ export default function App() {
         }}
       />
       <Routes>
-        <Route path="/" element={<Login />} />
+        <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/verify-otp" element={<VerifyOTP />} />

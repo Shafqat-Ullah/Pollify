@@ -22,7 +22,22 @@ export default function Profile() {
     enabled: !!data,
   });
 
-  if (isLoading) return <div className="text-muted text-sm">Loading profile...</div>;
+  if (isLoading)
+    return (
+      <div className="max-w-3xl mx-auto space-y-6">
+        <div className="glass-card p-6 flex items-center gap-5">
+          <div className="skeleton h-20 w-20 rounded-full shrink-0" />
+          <div className="space-y-2 flex-1">
+            <div className="skeleton h-5 w-40" />
+            <div className="skeleton h-3 w-24" />
+            <div className="skeleton h-3 w-56" />
+          </div>
+        </div>
+        <div className="grid sm:grid-cols-2 gap-5">
+          {Array.from({ length: 4 }).map((_, i) => <PollCardSkeleton key={i} />)}
+        </div>
+      </div>
+    );
 
   const profileUser = data.data.user;
   const stats = data.data.stats;

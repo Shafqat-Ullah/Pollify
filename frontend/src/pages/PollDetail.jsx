@@ -27,7 +27,24 @@ export default function PollDetail() {
     enabled: !!data,
   });
 
-  if (isLoading) return <div className="text-muted text-sm">Loading poll...</div>;
+  if (isLoading)
+    return (
+      <div className="max-w-2xl mx-auto space-y-3">
+        <div className="glass-card p-6 space-y-3">
+          <div className="skeleton h-5 w-24" />
+          <div className="skeleton h-8 w-3/4" />
+          <div className="skeleton h-3 w-full" />
+          <div className="skeleton h-14 w-full" />
+          <div className="skeleton h-14 w-full" />
+          <div className="skeleton h-14 w-full" />
+        </div>
+        <div className="glass-card p-6 space-y-3">
+          <div className="skeleton h-5 w-32" />
+          <div className="skeleton h-12 w-full" />
+          <div className="skeleton h-12 w-full" />
+        </div>
+      </div>
+    );
 
   const poll = data.data.poll;
   const hasVoted = !!data.data.userVote;

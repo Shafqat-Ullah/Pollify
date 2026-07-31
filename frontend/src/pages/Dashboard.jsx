@@ -22,10 +22,12 @@ export default function Dashboard() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="font-display font-bold text-2xl">Welcome back, {user?.name?.split(" ")[0]}</h1>
-          <p className="text-muted text-sm">Here's what's happening with your polls.</p>
+          <h1 className="font-display font-bold text-2xl">
+            Welcome back, <span className="text-gradient">{user?.name?.split(" ")[0]}</span>
+          </h1>
+          <p className="text-zinc-500 text-sm mt-1">Here's what's happening with your polls.</p>
         </div>
         <Link to="/polls/create" className="btn-primary">
           <Plus className="w-4 h-4" /> New poll
@@ -98,11 +100,14 @@ export default function Dashboard() {
 
 function StatCard({ icon: Icon, label, value }) {
   return (
-    <div className="glass-card p-5">
-      <div className="flex items-center gap-2 text-muted text-xs mb-2">
-        <Icon className="w-3.5 h-3.5" /> {label}
+    <div className="glass-card p-5 flex items-center gap-4">
+      <div className="icon-chip shrink-0">
+        <Icon className="w-5 h-5" />
       </div>
-      <p className="font-display font-bold text-2xl">{value}</p>
+      <div className="min-w-0">
+        <p className="text-xs text-zinc-500 mb-0.5 truncate">{label}</p>
+        <p className="font-display font-bold text-2xl">{value}</p>
+      </div>
     </div>
   );
 }

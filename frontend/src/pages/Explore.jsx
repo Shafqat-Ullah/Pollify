@@ -42,18 +42,31 @@ export default function Explore() {
   const polls = data?.pages.flatMap((p) => p.data.polls) || [];
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="font-display font-bold text-2xl">
-          {search ? `Results for "${search}"` : "Explore polls"}
-        </h1>
-        <div className="flex gap-1.5">
+    <div className="animate-fade-in">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="font-display font-bold text-2xl">
+            {search ? (
+              <>
+                Results for <span className="text-gradient">"{search}"</span>
+              </>
+            ) : (
+              <>
+                Explore <span className="text-gradient">polls</span>
+              </>
+            )}
+          </h1>
+          <p className="text-zinc-500 text-sm mt-1">Discover what your community is voting on.</p>
+        </div>
+        <div className="inline-flex gap-1 p-1 rounded-xl bg-zinc-900/80 border border-zinc-800 w-fit">
           {SORTS.map((s) => (
             <button
               key={s.value}
               onClick={() => setSort(s.value)}
-              className={`text-sm px-3 py-1.5 rounded-lg transition-colors ${
-                sort === s.value ? "bg-emerald-500 text-white font-medium" : "text-zinc-400 hover:bg-zinc-800"
+              className={`text-sm px-3 py-1.5 rounded-lg transition-all ${
+                sort === s.value
+                  ? "bg-emerald-500 text-white font-medium shadow-md shadow-emerald-500/25"
+                  : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800"
               }`}
             >
               {s.label}

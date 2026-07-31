@@ -52,12 +52,16 @@ export default function AdminDashboard() {
     <div>
       <h1 className="font-display font-bold text-2xl mb-6">Admin</h1>
 
-      <div className="flex gap-1.5 mb-6">
+      <div className="inline-flex gap-1 p-1 rounded-xl bg-zinc-900/80 border border-zinc-800 mb-6">
         {TABS.map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`text-sm px-3 py-1.5 rounded-lg capitalize ${tab === t ? "bg-emerald-500 text-white font-medium" : "text-zinc-400 hover:bg-zinc-800"}`}
+            className={`text-sm px-4 py-1.5 rounded-lg capitalize transition-all ${
+              tab === t
+                ? "bg-emerald-500 text-white font-medium shadow-md shadow-emerald-500/25"
+                : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800"
+            }`}
           >
             {t}
           </button>
@@ -126,11 +130,14 @@ export default function AdminDashboard() {
 
 function StatCard({ icon: Icon, label, value }) {
   return (
-    <div className="glass-card p-5">
-      <div className="flex items-center gap-2 text-muted text-xs mb-2">
-        <Icon className="w-3.5 h-3.5" /> {label}
+    <div className="glass-card p-5 flex items-center gap-4">
+      <div className="icon-chip shrink-0">
+        <Icon className="w-5 h-5" />
       </div>
-      <p className="font-display font-bold text-2xl">{value}</p>
+      <div className="min-w-0">
+        <p className="text-xs text-zinc-500 mb-0.5 truncate">{label}</p>
+        <p className="font-display font-bold text-2xl">{value}</p>
+      </div>
     </div>
   );
 }
