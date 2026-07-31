@@ -88,8 +88,13 @@ const sendMail = async (to, subject, html) => {
     return true;
   }
   try {
+    // Gmail rejects messages whose From address doesn't match the authenticated
+    // account, so always send from SMTP_USER when it's configured.
+    const from = process.env.SMTP_USER
+      ? `Pollify <${process.env.SMTP_USER}>`
+      : process.env.EMAIL_FROM || "Pollify <no-reply@pollify.app>";
     const info = await transport.sendMail({
-      from: process.env.EMAIL_FROM || "Pollify <no-reply@pollify.app>",
+      from,
       to,
       subject,
       html,
