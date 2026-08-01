@@ -1,4 +1,10 @@
 import nodemailer from "nodemailer";
+import dns from "node:dns";
+
+// Render's network has no IPv6 route. Force IPv4-first DNS resolution so SMTP
+// hosts (e.g. smtp.gmail.com) connect via their A records instead of failing
+// with `connect ENETUNREACH <ipv6>:587`.
+dns.setDefaultResultOrder("ipv4first");
 
 let transporter = null;
 
