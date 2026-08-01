@@ -33,6 +33,7 @@ const getTransporter = async () => {
       port: parseInt(process.env.SMTP_PORT || "587", 10),
       secure: parseInt(process.env.SMTP_PORT || "587", 10) === 465,
       auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+      family: 4,
       ...SMTP_TIMEOUTS,
     });
     try {
@@ -66,6 +67,7 @@ const getTransporter = async () => {
       port: 587,
       secure: false,
       auth: { user: testAccount.user, pass: testAccount.pass },
+      family: 4,
       ...SMTP_TIMEOUTS,
     });
     console.log(`[EMAIL] Using Ethereal test inbox: ${testAccount.user}`);
