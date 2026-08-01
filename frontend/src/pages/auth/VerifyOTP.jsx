@@ -15,7 +15,6 @@ export default function VerifyOTP() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(60);
-  const [demoOtp, setDemoOtp] = useState(state?.demoOtp || null);
   const inputRefs = useRef([]);
 
   useEffect(() => {
@@ -31,9 +30,9 @@ export default function VerifyOTP() {
   }, [resendCooldown]);
 
   const handleChange = (index, value) => {
-    if (!/^\d*$/.test(value)) return;
+    if (!/^[a-zA-Z0-9]*$/.test(value)) return;
     const newOtp = [...otp];
-    newOtp[index] = value.slice(-1);
+    newOtp[index] = value.toUpperCase().slice(-1);
     setOtp(newOtp);
     if (value && index < 5) {
       inputRefs.current[index + 1]?.focus();
@@ -49,7 +48,7 @@ export default function VerifyOTP() {
   const handleVerify = async () => {
     const code = otp.join("");
     if (code.length !== 6) {
-      toast.error("Please enter the full 6-digit code.");
+      toast.error("Please enter the full 6-character code.");
       return;
     }
     setLoading(true);
@@ -78,8 +77,7 @@ export default function VerifyOTP() {
     if (resendCooldown > 0) return;
     try {
       const type = isRegistration || fromLogin ? "registration" : "forgot-password";
-      const res = await authService.resendOtp({ email, type });
-      if (res.data?.otp) setDemoOtp(res.data.otp);
+      await authService.resendOtp({ email, type });
       toast.success("A new code has been sent to your email.");
       setResendCooldown(60);
     } catch (err) {
@@ -131,7 +129,7 @@ export default function VerifyOTP() {
             </h1>
 
             <p className="text-zinc-400 text-base leading-relaxed max-w-xs">
-              We sent a 6-digit code to your inbox. Enter it below to activate your account.
+              We sent a 6-character code to your inbox. Enter it below to activate your account.
             </p>
           </div>
 
@@ -185,7 +183,7 @@ export default function VerifyOTP() {
           <div className="mb-8">
             <h1 className="text-[28px] font-bold text-white tracking-tight leading-tight">Check your inbox</h1>
             <p className="text-zinc-400 mt-2 text-sm leading-relaxed">
-              We sent a 6-digit code to verify your email address.
+              We sent a 6-character code to verify your email address.
             </p>
           </div>
 
@@ -193,16 +191,6 @@ export default function VerifyOTP() {
             <Mail className="text-emerald-400 shrink-0" size={18} />
             <span className="text-sm text-zinc-300 font-medium">{email}</span>
           </div>
-
-          {demoOtp && (
-            <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 mb-6">
-              <p className="text-xs font-bold text-amber-300 uppercase tracking-wide">Demo mode — email not configured</p>
-              <p className="mt-2 text-center text-2xl font-bold tracking-[0.3em] text-amber-200">{demoOtp}</p>
-              <p className="mt-2 text-xs text-zinc-400 leading-relaxed">
-                Use this code to continue. It will be emailed instead once SMTP is configured on the server.
-              </p>
-            </div>
-          )}
 
           <div className="space-y-6">
             <p className="text-sm font-medium text-zinc-200">Verification code</p>
@@ -212,12 +200,14 @@ export default function VerifyOTP() {
                   key={i}
                   ref={(el) => (inputRefs.current[i] = el)}
                   type="text"
-                  inputMode="numeric"
+                  inputMode="text"
+                  autoComplete="one-time-code"
+                  autoCapitalize="characters"
                   maxLength={1}
                   value={digit}
                   onChange={(e) => handleChange(i, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(i, e)}
-                  className="w-11 h-12 text-center text-lg font-bold text-white bg-zinc-900/70 border border-zinc-700 rounded-xl outline-none transition-all focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/12"
+                  className="w-11 h-12 text-center text-lg font-bold text-white uppercase bg-zinc-900/70 border border-zinc-700 rounded-xl outline-none transition-all focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/12"
                 />
               ))}
             </div>
