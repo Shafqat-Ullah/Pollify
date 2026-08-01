@@ -36,6 +36,9 @@ const consumeAttempt = async (record) => {
 
 // Creates a hashed OTP record and sends the email. The record is removed if
 // email delivery fails so no unusable code is left behind.
+// Returns { record, emailed, otp } where emailed is true only when a real email
+// was sent via SMTP. When emailed is false the OTP is exposed so the UI can show
+// it in demo mode (SMTP not configured yet).
 const issueOtp = async ({ email, type, name = "" }) => {
   await Verification.deleteMany({ email, type });
 
@@ -47,17 +50,17 @@ const issueOtp = async ({ email, type, name = "" }) => {
     expiresAt: Date.now() + OTP_EXPIRY_MS,
   });
 
-  const sent =
+  const result =
     type === "registration"
       ? await sendRegistrationOtp(email, otp, name)
       : await sendForgotPasswordOtp(email, otp, name);
 
-  if (!sent) {
+  if (!result.ok) {
     await record.deleteOne();
     throw new ApiError(502, "We couldn't send the verification email. Please try again.");
   }
 
-  return record;
+  return { record, emailed: result.emailed, otp };
 };
 
 // ---------------------------------------------------------------------------
@@ -96,11 +99,14 @@ const sendRegistrationOtpCore = async (req, res) => {
     await User.create({ name, username: cleanUsername, email, password });
   }
 
-  await issueOtp({ email, type: "registration", name: existing ? existing.name : name });
+  const { emailed, otp } = await issueOtp({ email, type: "registration", name: existing ? existing.name : name });
 
   res.status(200).json({
     success: true,
-    message: "A verification code has been sent to your email.",
+    message: emailed
+      ? "A verification code has been sent to your email."
+      : "Email delivery is not configured yet, so your verification code is shown below.",
+    data: emailed ? undefined : { otp },
   });
 };
 
@@ -111,11 +117,14 @@ const sendResetOtpCore = async (req, res) => {
   const user = await User.findOne({ email });
   if (!user) throw new ApiError(404, "No account found with this email.");
 
-  await issueOtp({ email, type: "forgot-password", name: user.name });
+  const { emailed, otp } = await issueOtp({ email, type: "forgot-password", name: user.name });
 
   res.status(200).json({
     success: true,
-    message: "A password reset code has been sent to your email.",
+    message: emailed
+      ? "A password reset code has been sent to your email."
+      : "Email delivery is not configured yet, so your password reset code is shown below.",
+    data: emailed ? undefined : { otp },
   });
 };
 

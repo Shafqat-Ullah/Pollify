@@ -48,8 +48,8 @@ export default function Register() {
   const onSubmit = async (values) => {
     setLoading(true);
     try {
-      await authService.register(values);
-      navigate("/verify-otp", { state: values });
+      const res = await authService.register(values);
+      navigate("/verify-otp", { state: { ...values, demoOtp: res.data?.otp } });
     } catch (err) {
       const msg = err.response?.data?.message || "Registration failed.";
       toast.error(msg);

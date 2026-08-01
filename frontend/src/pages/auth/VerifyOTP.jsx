@@ -15,6 +15,7 @@ export default function VerifyOTP() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(60);
+  const [demoOtp, setDemoOtp] = useState(state?.demoOtp || null);
   const inputRefs = useRef([]);
 
   useEffect(() => {
@@ -77,7 +78,8 @@ export default function VerifyOTP() {
     if (resendCooldown > 0) return;
     try {
       const type = isRegistration || fromLogin ? "registration" : "forgot-password";
-      await authService.resendOtp({ email, type });
+      const res = await authService.resendOtp({ email, type });
+      if (res.data?.otp) setDemoOtp(res.data.otp);
       toast.success("A new code has been sent to your email.");
       setResendCooldown(60);
     } catch (err) {
@@ -191,6 +193,16 @@ export default function VerifyOTP() {
             <Mail className="text-emerald-400 shrink-0" size={18} />
             <span className="text-sm text-zinc-300 font-medium">{email}</span>
           </div>
+
+          {demoOtp && (
+            <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 mb-6">
+              <p className="text-xs font-bold text-amber-300 uppercase tracking-wide">Demo mode — email not configured</p>
+              <p className="mt-2 text-center text-2xl font-bold tracking-[0.3em] text-amber-200">{demoOtp}</p>
+              <p className="mt-2 text-xs text-zinc-400 leading-relaxed">
+                Use this code to continue. It will be emailed instead once SMTP is configured on the server.
+              </p>
+            </div>
+          )}
 
           <div className="space-y-6">
             <p className="text-sm font-medium text-zinc-200">Verification code</p>

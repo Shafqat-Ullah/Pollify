@@ -17,8 +17,8 @@ export default function ForgotPassword() {
     }
     setLoading(true);
     try {
-      await authService.forgotPassword(email);
-      navigate("/verify-forgot-otp", { state: { email } });
+      const res = await authService.forgotPassword(email);
+      navigate("/verify-forgot-otp", { state: { email, demoOtp: res.data?.otp } });
     } catch (err) {
       toast.error(err.response?.data?.message || "Something went wrong.");
     } finally {

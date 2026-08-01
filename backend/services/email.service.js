@@ -76,16 +76,19 @@ const getTransporter = async () => {
   }
 };
 
+// Returns { ok, emailed }: emailed is true only when a real message left via SMTP.
+// When SMTP is unavailable, ok stays true so auth flows don't break and the OTP is
+// surfaced in the server logs and (in demo mode) in the API response for the UI.
 const sendMail = async (to, subject, html) => {
   // Test/CI mode: skip real delivery while still logging the OTP.
-  if (process.env.EMAIL_DISABLE === "true") return true;
+  if (process.env.EMAIL_DISABLE === "true") return { ok: true, emailed: false };
 
   const transport = await getTransporter();
   if (!transport) {
     // No SMTP available (or connection failed). Fall back to console OTP
     // delivery so register / forgot-password keep working on free hosts.
     console.warn(`[EMAIL] No SMTP available for "${subject}" to ${to} — OTP delivered to console.`);
-    return true;
+    return { ok: true, emailed: false };
   }
   try {
     // Gmail rejects messages whose From address doesn't match the authenticated
@@ -101,11 +104,11 @@ const sendMail = async (to, subject, html) => {
     });
     const previewUrl = nodemailer.getTestMessageUrl(info);
     if (previewUrl) console.log(`[EMAIL] Preview: ${previewUrl}`);
-    return true;
+    return { ok: true, emailed: true };
   } catch (error) {
     console.error(`[EMAIL] Failed to send to ${to}: ${error.message}`);
     transporter = null;
-    return false;
+    return { ok: false, emailed: false };
   }
 };
 
@@ -250,9 +253,9 @@ export const sendRegistrationOtp = async (to, otp, name = "") => {
   const body =
     "Thanks for joining the community. Please confirm your email address by entering the verification code below.";
   const html = buildOtpEmail({ header, greeting, body, otp, expiryMinutes: 5 });
-  const ok = await sendMail(to, "Verify Your Email Address — Pollify", html);
-  if (ok) logOtp(to, otp);
-  return ok;
+  const result = await sendMail(to, "Verify Your Email Address — Pollify", html);
+  if (result.ok) logOtp(to, otp);
+  return result;
 };
 
 export const sendForgotPasswordOtp = async (to, otp, name = "") => {
@@ -261,7 +264,7 @@ export const sendForgotPasswordOtp = async (to, otp, name = "") => {
   const body =
     "We received a request to reset your password. Use the code below to verify your identity and choose a new password.";
   const html = buildOtpEmail({ header, greeting, body, otp, expiryMinutes: 5 });
-  const ok = await sendMail(to, "Reset Your Password — Pollify", html);
-  if (ok) logOtp(to, otp);
-  return ok;
+  const result = await sendMail(to, "Reset Your Password — Pollify", html);
+  if (result.ok) logOtp(to, otp);
+  return result;
 };
