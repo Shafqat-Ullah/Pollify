@@ -14,13 +14,16 @@ const hasEmailJsConfig = () => {
   const serviceId = process.env.EMAILJS_SERVICE_ID;
   const templateId = process.env.EMAILJS_TEMPLATE_ID;
   const privateKey = process.env.EMAILJS_PRIVATE_KEY;
+  const publicKey = process.env.EMAILJS_PUBLIC_KEY;
   return Boolean(
     serviceId &&
       templateId &&
       privateKey &&
+      publicKey &&
       serviceId !== "your_service_id" &&
       templateId !== "your_template_id" &&
-      privateKey !== "your_private_key"
+      privateKey !== "your_private_key" &&
+      publicKey !== "your_public_key"
   );
 };
 
@@ -52,6 +55,7 @@ const sendMail = async (to, subject, params) => {
       body: JSON.stringify({
         service_id: process.env.EMAILJS_SERVICE_ID,
         template_id: process.env.EMAILJS_TEMPLATE_ID,
+        user_id: process.env.EMAILJS_PUBLIC_KEY,
         template_params: {
           to_email: to,
           subject,
