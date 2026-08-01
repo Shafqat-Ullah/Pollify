@@ -29,13 +29,9 @@ services:
         sync: false
       - key: CLOUDINARY_API_SECRET
         sync: false
-      - key: SMTP_HOST
-        value: smtp-relay.brevo.com
-      - key: SMTP_PORT
-        value: 587
-      - key: SMTP_USER
+      - key: EMAILJS_SERVICE_ID
         sync: false
-      - key: SMTP_PASS
+      - key: EMAILJS_TEMPLATE_ID
         sync: false
-      - key: EMAIL_FROM
+      - key: EMAILJS_PRIVATE_KEY
         sync: false
