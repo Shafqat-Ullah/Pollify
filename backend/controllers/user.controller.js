@@ -46,10 +46,11 @@ export const updateProfile = asyncHandler(async (req, res) => {
   res.status(200).json({ success: true, data: { user: req.user.toSafeObject() } });
 });
 
-// @route PUT /api/users/me/avatar  (multer attaches req.file via Cloudinary storage)
+// @route PUT /api/users/me/avatar  (multer attaches req.file via memory storage)
 export const updateAvatar = asyncHandler(async (req, res) => {
   if (!req.file) throw new ApiError(400, "No image uploaded.");
-  req.user.avatar = { url: req.file.path, publicId: req.file.filename };
+  const dataUri = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
+  req.user.avatar = { url: dataUri, publicId: "" };
   await req.user.save();
   res.status(200).json({ success: true, data: { avatar: req.user.avatar } });
 });
