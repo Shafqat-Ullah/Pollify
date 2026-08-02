@@ -18,6 +18,7 @@ export default function PollDetail() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [selected, setSelected] = useState([]);
+  const [rateLevel, setRateLevel] = useState(0);
   const [comment, setComment] = useState("");
   const [voting, setVoting] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(null);
@@ -82,15 +83,15 @@ export default function PollDetail() {
   const rateNow = async (level) => {
     const r = ratingLevels[level - 1];
     if (!r || !canRate) return;
-    setVoting(true);
+    setRateLevel(0);
+    castOptimisticVote([r.id]);
+    toast.success(`Rated ${level} star${level > 1 ? "s" : ""}!`);
     try {
       await pollService.vote(id, [r.id]);
-      toast.success(`Rated ${level} star${level > 1 ? "s" : ""}!`);
       invalidatePollQueries(queryClient);
     } catch (err) {
+      queryClient.invalidateQueries({ queryKey: ["poll", id] });
       toast.error(err.response?.data?.message || "Could not cast rating.");
-    } finally {
-      setVoting(false);
     }
   };
 
@@ -103,15 +104,37 @@ export default function PollDetail() {
     }
   };
 
+  const castOptimisticVote = (optionIds) => {
+    queryClient.setQueryData(["poll", id], (old) => {
+      if (!old) return old;
+      const poll = old.data.poll;
+      const options = poll.options.map((o) =>
+        optionIds.some((oid) => String(oid) === String(o._id))
+          ? { ...o, votesCount: (o.votesCount || 0) + 1 }
+          : o
+      );
+      return {
+        ...old,
+        data: {
+          ...old.data,
+          poll: { ...poll, options, totalVotes: poll.totalVotes + 1 },
+          userVote: { selectedOptions: optionIds },
+        },
+      };
+    });
+  };
+
   const submitVote = async () => {
     if (expired) return toast.error("This poll has ended.");
     if (selected.length === 0) return toast.error("Select an option first.");
     setVoting(true);
+    castOptimisticVote(selected);
+    toast.success("Vote cast!");
     try {
       await pollService.vote(id, selected);
-      toast.success("Vote cast!");
       invalidatePollQueries(queryClient);
     } catch (err) {
+      queryClient.invalidateQueries({ queryKey: ["poll", id] });
       toast.error(err.response?.data?.message || "Could not cast vote.");
     } finally {
       setVoting(false);
@@ -169,11 +192,22 @@ export default function PollDetail() {
                 <RatingStars
                   interactive
                   size={44}
-                  onChange={rateNow}
+                  value={rateLevel}
+                  onChange={setRateLevel}
                   disabled={voting}
                 />
-                <p className="text-sm text-muted">Tap a star to rate</p>
-                {voting && <p className="text-xs text-primary">Submitting...</p>}
+                <p className="text-sm text-muted">
+                  {rateLevel > 0 ? `${rateLevel}-star rating selected` : "Tap a star, then submit"}
+                </p>
+                {rateLevel > 0 && (
+                  <Button
+                    onClick={() => rateNow(rateLevel)}
+                    loading={voting}
+                    className="px-5 py-2 text-sm"
+                  >
+                    {`Submit ${rateLevel}-star rating`}
+                  </Button>
+                )}
               </div>
             ) : (
               <div className="flex flex-col items-center gap-3 py-4">
@@ -241,7 +275,7 @@ export default function PollDetail() {
           </p>
         )}
 
-        {!hasVoted && (poll.status === "published" || (poll.status === "draft" && isOwner)) && !expired && (
+        {!isRating && !hasVoted && (poll.status === "published" || (poll.status === "draft" && isOwner)) && !expired && (
           <Button onClick={submitVote} loading={voting} className="w-full mb-2">
             Cast vote · {totalVotes} {totalVotes === 1 ? "vote" : "votes"}
           </Button>

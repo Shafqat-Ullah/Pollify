@@ -60,13 +60,13 @@ export const castVote = asyncHandler(async (req, res) => {
   await poll.save();
 
   if (String(poll.author) !== String(req.user._id) && !poll.isAnonymous) {
-    await Notification.create({
+    Notification.create({
       recipient: poll.author,
       sender: req.user._id,
       type: "new_vote",
       poll: poll._id,
       message: `${req.user.name} voted on your poll "${poll.title}"`,
-    });
+    }).catch((err) => console.error("Notification create failed:", err.message));
   }
 
   emitPollUpdate(poll);

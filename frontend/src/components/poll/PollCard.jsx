@@ -93,6 +93,7 @@ export default function PollCard({
   const [commentBusy, setCommentBusy] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(null);
   const [localVote, setLocalVote] = useState(null);
+  const [selectedLevel, setSelectedLevel] = useState(0);
 
   const closed = poll.status === "closed" || (poll.expiresAt && new Date(poll.expiresAt) < new Date());
   const draft = poll.status === "draft";
@@ -136,7 +137,16 @@ export default function PollCard({
       onVote(poll._id, [r.id]);
       return;
     }
+    setSelectedLevel(0);
     setBusy(true);
+    setLocalVote({
+      totalVotes: total + 1,
+      options: liveOptions.map((o) =>
+        String(o._id) === String(r.id) ? { ...o, votesCount: (o.votesCount || 0) + 1 } : o
+      ),
+      myVote: r.id,
+    });
+    toast.success(`Rated ${level} star${level > 1 ? "s" : ""}!`);
     try {
       const res = await pollService.vote(poll._id, [r.id]);
       setLocalVote({
@@ -144,9 +154,9 @@ export default function PollCard({
         options: res.data.poll.options,
         myVote: r.id,
       });
-      toast.success(`Rated ${level} star${level > 1 ? "s" : ""}!`);
       invalidatePollQueries(queryClient);
     } catch (err) {
+      setLocalVote(null);
       toast.error(err.response?.data?.message || "Could not cast rating.");
     } finally {
       setBusy(false);
@@ -392,12 +402,24 @@ export default function PollCard({
                 <RatingStars
                   interactive
                   size={32}
+                  value={selectedLevel}
                   disabled={busy}
-                  onChange={handleRate}
+                  onChange={setSelectedLevel}
                 />
                 <p className="text-xs text-zinc-500">
-                  {busy ? "Submitting..." : `Tap to rate · ${total} ${total === 1 ? "rating" : "ratings"}`}
+                  {selectedLevel > 0
+                    ? `${selectedLevel}-star rating selected`
+                    : `Tap a star, then submit · ${total} ${total === 1 ? "rating" : "ratings"}`}
                 </p>
+                {selectedLevel > 0 && (
+                  <button
+                    onClick={() => handleRate(selectedLevel)}
+                    disabled={busy}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-amber-500 text-zinc-900 px-4 py-1.5 text-xs font-bold hover:bg-amber-400 disabled:opacity-50 transition-colors"
+                  >
+                    {busy ? "Submitting..." : `Submit ${selectedLevel}-star rating`}
+                  </button>
+                )}
               </div>
             ) : (
               <div className="flex flex-col items-center gap-1.5 py-2">
