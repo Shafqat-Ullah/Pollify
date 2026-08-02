@@ -199,7 +199,7 @@ export default function PollCard({
             <div className="flex items-center gap-1.5 flex-wrap">
               <Link
                 to={`/profile/${author.username}`}
-                className="text-xs font-semibold text-zinc-300 hover:text-white transition-colors"
+                className="text-xs font-semibold text-zinc-300 hover:text-zinc-100 transition-colors"
               >
                 {author.name || "Anonymous"}
               </Link>
@@ -228,13 +228,13 @@ export default function PollCard({
           <div className="flex items-center gap-1.5 mb-3 flex-wrap">
             <button
               onClick={startEdit}
-              className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+              className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors"
             >
               <Pencil size={11} /> Edit
             </button>
             <Link
               to={`/polls/${poll._id}/analytics`}
-              className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+              className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors"
             >
               <BarChart3 size={11} /> Analytics
             </Link>
@@ -287,7 +287,7 @@ export default function PollCard({
               </button>
               <button
                 onClick={() => setEditing(false)}
-                className="inline-flex items-center gap-1 rounded-xl bg-zinc-800 text-zinc-400 px-3 py-1.5 text-xs font-semibold hover:text-white"
+                className="inline-flex items-center gap-1 rounded-xl bg-zinc-800 text-zinc-400 px-3 py-1.5 text-xs font-semibold hover:text-zinc-100"
               >
                 Cancel
               </button>

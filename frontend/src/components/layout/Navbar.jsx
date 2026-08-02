@@ -1,7 +1,8 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import { Bell, Search, SquarePen, LogOut, User as UserIcon, LayoutDashboard, Shield, Menu, X } from "lucide-react";
+import { Bell, Search, SquarePen, LogOut, User as UserIcon, LayoutDashboard, Shield, Menu, X, Sun, Moon } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
+import { useTheme } from "../../contexts/ThemeContext";
 
 const navItem = ({ isActive }) =>
   `flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -10,6 +11,7 @@ const navItem = ({ isActive }) =>
 
 export default function Navbar() {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -36,7 +38,7 @@ export default function Navbar() {
             alt="Pollify logo"
             className="w-8 h-8 rounded-lg shadow-lg shadow-emerald-500/30 transition-transform group-hover:scale-105"
           />
-          <span className="hidden sm:block text-[15px] font-bold text-white tracking-tight">
+          <span className="hidden sm:block text-[15px] font-bold text-zinc-100 tracking-tight">
             Pollify
           </span>
         </Link>
@@ -58,6 +60,14 @@ export default function Navbar() {
         </form>
 
         <div className="flex items-center gap-1.5 ml-auto md:ml-0 shrink-0">
+          <button
+            onClick={toggleTheme}
+            aria-label={theme === "dark" ? "Switch to day mode" : "Switch to night mode"}
+            title={theme === "dark" ? "Day mode" : "Night mode"}
+            className="grid place-items-center w-8 h-8 rounded-xl text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-colors"
+          >
+            {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
           {user ? (
             <>
               <Link
@@ -127,6 +137,15 @@ export default function Navbar() {
 
       {mobileOpen && (
         <div className="lg:hidden border-t border-zinc-800/60 bg-zinc-950/95 backdrop-blur-xl px-4 py-3 space-y-1 animate-fade-in">
+          <div className="flex items-center gap-1 mb-2">
+            <button
+              onClick={toggleTheme}
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors"
+            >
+              {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
+              {theme === "dark" ? "Day mode" : "Night mode"}
+            </button>
+          </div>
           <form
             onSubmit={(e) => {
               e.preventDefault();

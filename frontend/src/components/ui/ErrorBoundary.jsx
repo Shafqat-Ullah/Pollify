@@ -18,7 +18,7 @@ export default class ErrorBoundary extends Component {
     if (this.state.hasError) {
       return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-zinc-950 text-center px-6">
-          <h1 className="text-2xl font-bold text-white mb-2">Something went wrong</h1>
+          <h1 className="text-2xl font-bold text-zinc-100 mb-2">Something went wrong</h1>
           <p className="text-zinc-400 text-sm mb-6">
             An unexpected error occurred. Please refresh the page to continue.
           </p>

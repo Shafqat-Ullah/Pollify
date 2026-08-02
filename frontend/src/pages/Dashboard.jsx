@@ -107,7 +107,7 @@ export default function Dashboard() {
         {/* Greeting */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-lg font-bold text-white">
+            <h1 className="text-lg font-bold text-zinc-100">
               Hey, <span className="text-emerald-400">{firstName}</span> 👋
             </h1>
             <p className="text-sm text-zinc-600 mt-0.5">What's the community thinking today?</p>
@@ -144,7 +144,7 @@ export default function Dashboard() {
             onClick={() => setTab("all")}
             className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
               tab === "all"
-                ? "bg-zinc-800 text-white border border-zinc-700"
+                ? "bg-zinc-800 text-zinc-100 border border-zinc-700"
                 : "text-zinc-600 hover:text-zinc-400"
             }`}
           >
@@ -154,7 +154,7 @@ export default function Dashboard() {
             onClick={() => setTab("following")}
             className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
               tab === "following"
-                ? "bg-zinc-800 text-white border border-zinc-700"
+                ? "bg-zinc-800 text-zinc-100 border border-zinc-700"
                 : "text-zinc-600 hover:text-zinc-400"
             }`}
           >
@@ -249,7 +249,7 @@ export default function Dashboard() {
             </div>
             <Link
               to={`/profile/${user?.username}`}
-              className="mt-3 text-sm font-semibold text-zinc-200 hover:text-white transition-colors"
+              className="mt-3 text-sm font-semibold text-zinc-200 hover:text-zinc-100 transition-colors"
             >
               {user?.name}
             </Link>
@@ -257,22 +257,22 @@ export default function Dashboard() {
 
             <div className="relative mt-5 pt-4 border-t border-zinc-800/80 grid grid-cols-3 divide-x divide-zinc-800/80 w-full">
               <div className="text-center px-1">
-                <p className="text-base font-bold text-white tabular-nums">{stats?.totalPolls ?? 0}</p>
+                <p className="text-base font-bold text-zinc-100 tabular-nums">{stats?.totalPolls ?? 0}</p>
                 <p className="text-[10px] text-zinc-600 mt-0.5 uppercase tracking-wide">Created</p>
               </div>
               <div className="text-center px-1">
-                <p className="text-base font-bold text-white tabular-nums">{stats?.totalVotesCast ?? 0}</p>
+                <p className="text-base font-bold text-zinc-100 tabular-nums">{stats?.totalVotesCast ?? 0}</p>
                 <p className="text-[10px] text-zinc-600 mt-0.5 uppercase tracking-wide">Voted</p>
               </div>
               <div className="text-center px-1">
-                <p className="text-base font-bold text-white tabular-nums">{stats?.savedPolls ?? 0}</p>
+                <p className="text-base font-bold text-zinc-100 tabular-nums">{stats?.savedPolls ?? 0}</p>
                 <p className="text-[10px] text-zinc-600 mt-0.5 uppercase tracking-wide">Saved</p>
               </div>
             </div>
 
             <Link
               to={`/profile/${user?.username}`}
-              className="relative mt-4 w-full flex items-center justify-center gap-1 rounded-xl bg-zinc-800/60 hover:bg-zinc-800 border border-zinc-700/50 text-zinc-400 hover:text-white text-xs font-semibold py-2 transition-colors"
+              className="relative mt-4 w-full flex items-center justify-center gap-1 rounded-xl bg-zinc-800/60 hover:bg-zinc-800 border border-zinc-700/50 text-zinc-400 hover:text-zinc-100 text-xs font-semibold py-2 transition-colors"
             >
               View profile <ChevronRight size={13} />
             </Link>

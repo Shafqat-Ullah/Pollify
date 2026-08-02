@@ -46,7 +46,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen lg:grid lg:grid-cols-2">
+    <div className="dark min-h-screen lg:grid lg:grid-cols-2">
       {/* Left Panel — Branding */}
       <div className="relative flex flex-col justify-center px-12 py-16 bg-zinc-900 overflow-hidden">
         {/* Background glows */}
