@@ -34,13 +34,6 @@ export default function Navbar() {
             <span className="text-emerald-400">Poll</span>
             <span className="text-zinc-100">ify</span>
           </Link>
-          {user && (
-            <nav className="hidden md:flex items-center gap-1">
-              <NavLink to="/explore" className={navItem}>Explore</NavLink>
-              <NavLink to="/dashboard" className={navItem}>Dashboard</NavLink>
-              <NavLink to={`/profile/${user.username}`} className={navItem}>Profile</NavLink>
-            </nav>
-          )}
         </div>
 
         <form
@@ -146,6 +139,10 @@ export default function Navbar() {
           {user && (
             <>
               <NavLink to="/dashboard" className={navItem} onClick={closeAll}>Dashboard</NavLink>
+              <NavLink to="/polls/create" className={navItem} onClick={closeAll}>Create</NavLink>
+              <NavLink to="/my-polls" className={navItem} onClick={closeAll}>My Polls</NavLink>
+              <NavLink to="/voted" className={navItem} onClick={closeAll}>Voted</NavLink>
+              <NavLink to="/saved" className={navItem} onClick={closeAll}>Saved</NavLink>
               <NavLink to={`/profile/${user.username}`} className={navItem} onClick={closeAll}>Profile</NavLink>
               <Link to="/polls/create" className="btn-primary text-sm w-full mt-2" onClick={closeAll}>
                 <Plus className="w-4 h-4" /> Create Poll

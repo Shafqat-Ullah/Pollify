@@ -9,6 +9,9 @@ import Explore from "./pages/Explore";
 import PollDetail from "./pages/PollDetail";
 import CreatePoll from "./pages/CreatePoll";
 import Dashboard from "./pages/Dashboard";
+import MyPolls from "./pages/MyPolls";
+import Voted from "./pages/Voted";
+import Saved from "./pages/Saved";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import Notifications from "./pages/Notifications";
@@ -47,6 +50,9 @@ export default function App() {
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/polls/create" element={<CreatePoll />} />
+            <Route path="/my-polls" element={<MyPolls />} />
+            <Route path="/voted" element={<Voted />} />
+            <Route path="/saved" element={<Saved />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/notifications" element={<Notifications />} />
           </Route>
