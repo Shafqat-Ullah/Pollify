@@ -62,12 +62,12 @@ export const sendOtpRules = [
 
 export const verifyOtpRules = [
   body("email").trim().isEmail().withMessage("A valid email is required").normalizeEmail(),
-  body("otp").matches(/^\d{6}$/).withMessage("OTP must be a 6-digit code"),
+  body("otp").matches(/^[a-zA-Z0-9]{6}$/).withMessage("OTP must be a 6-character code"),
 ];
 
 export const verifyResetOtpRules = [
   body("email").trim().isEmail().withMessage("A valid email is required").normalizeEmail(),
-  body("otp").matches(/^\d{6}$/).withMessage("OTP must be a 6-digit code"),
+  body("otp").matches(/^[a-zA-Z0-9]{6}$/).withMessage("OTP must be a 6-character code"),
 ];
 
 export const resendOtpRules = [

@@ -143,7 +143,8 @@ export const resendOtp = asyncHandler(async (req, res) => {
 // POST /api/auth/verify-otp
 // ---------------------------------------------------------------------------
 export const verifyOtp = asyncHandler(async (req, res) => {
-  const { otp, name, username, password } = req.body;
+  const { name, username, password } = req.body;
+  const otp = String(req.body.otp || "").trim().toUpperCase();
   const email = normalizeEmail(req.body.email);
   if (!email || !otp) throw new ApiError(400, "Email and OTP are required.");
 
@@ -275,7 +276,7 @@ export const forgotPassword = asyncHandler(async (req, res) => sendResetOtpCore(
 // POST /api/auth/verify-reset-otp
 // ---------------------------------------------------------------------------
 export const verifyResetOtp = asyncHandler(async (req, res) => {
-  const { otp } = req.body;
+  const otp = String(req.body.otp || "").trim().toUpperCase();
   const email = normalizeEmail(req.body.email);
   if (!email || !otp) throw new ApiError(400, "Email and OTP are required.");
 

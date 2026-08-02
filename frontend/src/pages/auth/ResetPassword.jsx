@@ -25,6 +25,10 @@ export default function ResetPassword() {
       toast.error("Password must be at least 8 characters.");
       return;
     }
+    if (!/\d/.test(password)) {
+      toast.error("Password must contain at least one number.");
+      return;
+    }
     if (password !== confirm) {
       toast.error("Passwords do not match.");
       return;
@@ -35,7 +39,12 @@ export default function ResetPassword() {
       setDone(true);
       toast.success("Password reset successfully!");
     } catch (err) {
-      toast.error(err.response?.data?.message || "Something went wrong.");
+      const fieldErrors = err.response?.data?.errors;
+      if (fieldErrors?.length) {
+        toast.error(fieldErrors.map((e) => e.message).join(" "));
+      } else {
+        toast.error(err.response?.data?.message || "Something went wrong.");
+      }
     } finally {
       setLoading(false);
     }
@@ -157,9 +166,9 @@ export default function ResetPassword() {
                   <ChevronLeft size={14} />
                   Back to login
                 </button>
-                <h1 className="text-[28px] font-bold text-white tracking-tight leading-tight">New password</h1>
+                <h1 className="text-[28px] font-bold text-white tracking-tight leading-tight">Enter your new password</h1>
                 <p className="text-zinc-400 mt-2 text-sm leading-relaxed">
-                  Enter your new password below.
+                  Choose a strong password and confirm it below.
                 </p>
               </div>
 
@@ -171,7 +180,7 @@ export default function ResetPassword() {
                       type={show ? "text" : "password"}
                       required
                       minLength={8}
-                      placeholder="Min. 8 characters"
+                      placeholder="Min. 8 chars, must include a number"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className="w-full h-10 rounded-xl bg-zinc-900/70 border border-zinc-800 px-3 pr-11 text-white placeholder:text-zinc-600 outline-none transition-all focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/12 text-sm"
