@@ -1,12 +1,24 @@
 import Poll from "../models/Poll.js";
 import Vote from "../models/Vote.js";
+import Category from "../models/Category.js";
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
+
+const slugify = (str) => str.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+
+const DEFAULT_OPTIONS = {
+  yesno: ["Yes", "No"],
+  rating: ["⭐", "⭐⭐", "⭐⭐⭐", "⭐⭐⭐⭐", "⭐⭐⭐⭐⭐"],
+  open: ["Write your answer"],
+};
+
+const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 // @route POST /api/polls
 export const createPoll = asyncHandler(async (req, res) => {
   const {
     title,
+    question,
     description,
     type,
     options,
@@ -19,13 +31,33 @@ export const createPoll = asyncHandler(async (req, res) => {
     status,
   } = req.body;
 
+  // Category may be a name (from the create form). Resolve it, or create it on demand.
+  let categoryId;
+  if (category) {
+    if (typeof category === "string") {
+      const found = await Category.findOne({ name: { $regex: `^${escapeRegex(category)}$`, $options: "i" } });
+      categoryId = found ? found._id : (await Category.create({ name: category, slug: slugify(category) }))._id;
+    } else {
+      categoryId = category;
+    }
+  }
+
+  let pollOptions;
+  if (type === "image") {
+    // Image polls come as option objects: [{ text, image: { url } }]
+    pollOptions = (options || []).map((o) => (typeof o === "string" ? { text: o } : o));
+  } else {
+    pollOptions = options && options.length ? options : DEFAULT_OPTIONS[type] || [];
+    pollOptions = pollOptions.map((o) => (typeof o === "string" ? { text: o } : o));
+  }
+
   const poll = await Poll.create({
-    title,
+    title: title ?? question,
     description,
     author: req.user._id,
     type,
-    options: options.map((o) => (typeof o === "string" ? { text: o } : o)),
-    category,
+    options: pollOptions,
+    category: categoryId,
     tags,
     visibility,
     isAnonymous,
