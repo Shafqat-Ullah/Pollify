@@ -93,6 +93,7 @@ export default function PollCard({
 
   const closed = poll.status === "closed" || (poll.expiresAt && new Date(poll.expiresAt) < new Date());
   const draft = poll.status === "draft";
+  const isOwner = user && String(poll.author?._id || poll.author) === String(user._id);
   const total = localVote ? localVote.totalVotes : poll.totalVotes || 0;
   const myVote = localVote
     ? [String(localVote.myVote)]
@@ -101,7 +102,7 @@ export default function PollCard({
       : null;
   const voted = !!myVote && myVote.length > 0;
   const canUndo = voted && (!!onUnvote || !!user) && !closed;
-  const interactive = !voted && !!onVote && !closed && !draft;
+  const interactive = !voted && !!onVote && !closed && (!draft || isOwner);
   const liveOptions = localVote ? localVote.options : poll.options || [];
 
   const options = [...(poll.options || [])].sort((a, b) => (b.votesCount || 0) - (a.votesCount || 0));
@@ -123,7 +124,7 @@ export default function PollCard({
   const myLevel = isRating && myVote
     ? ratingLevels.find((r) => myVote.includes(String(r.id)))?.level || 0
     : 0;
-  const ratingInteractive = isRating && !voted && !closed && !draft && (!!onVote || !!user);
+  const ratingInteractive = isRating && !voted && !closed && (!!onVote || !!user) && (!draft || isOwner);
 
   const handleRate = async (level) => {
     const r = ratingLevels[level - 1];

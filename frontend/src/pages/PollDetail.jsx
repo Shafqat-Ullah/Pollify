@@ -71,8 +71,12 @@ export default function PollDetail() {
     isRating && totalVotes > 0
       ? ratingLevels.reduce((s, r) => s + r.level * r.votes, 0) / totalVotes
       : 0;
+  const isOwner = user && String(poll.author?._id || poll.author) === String(user._id);
   const maxLevelVotes = Math.max(1, ...ratingLevels.map((r) => r.votes));
-  const canRate = !hasVoted && poll.status === "published" && !expired;
+  const canRate =
+    !hasVoted &&
+    !expired &&
+    (poll.status === "published" || (poll.status === "draft" && isOwner));
 
   const rateNow = async (level) => {
     const r = ratingLevels[level - 1];
@@ -234,7 +238,7 @@ export default function PollDetail() {
           </p>
         )}
 
-        {!hasVoted && poll.status === "published" && !expired && (
+        {!hasVoted && (poll.status === "published" || (poll.status === "draft" && isOwner)) && !expired && (
           <Button onClick={submitVote} loading={voting} className="w-full mb-2">
             Cast vote · {totalVotes} {totalVotes === 1 ? "vote" : "votes"}
           </Button>

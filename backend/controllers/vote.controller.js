@@ -22,7 +22,11 @@ export const castVote = asyncHandler(async (req, res) => {
   const poll = await Poll.findById(req.params.id);
 
   if (!poll) throw new ApiError(404, "Poll not found.");
-  if (poll.status !== "published") throw new ApiError(400, "This poll is not accepting votes.");
+  const isAuthor = String(poll.author) === String(req.user._id);
+  // Authors may preview their own drafts; only published polls accept public votes.
+  if (poll.status !== "published" && !(poll.status === "draft" && isAuthor)) {
+    throw new ApiError(400, "This poll is not accepting votes.");
+  }
   if (poll.expiresAt && new Date() > poll.expiresAt) {
     throw new ApiError(400, "This poll has expired.");
   }
