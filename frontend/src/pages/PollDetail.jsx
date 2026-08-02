@@ -204,7 +204,10 @@ export default function PollDetail() {
                     </div>
                   </>
                 ) : (
-                  <p className="text-sm text-muted">No ratings yet. Be the first to rate!</p>
+                  <>
+                    <RatingStars value={0} size={28} />
+                    <p className="text-sm text-muted">No ratings yet. Be the first to rate!</p>
+                  </>
                 )}
               </div>
             )}

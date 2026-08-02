@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Star } from "lucide-react";
 
-export default function RatingStars({ value = 0, size = 24, interactive = false, onChange, className = "" }) {
+export default function RatingStars({ value = 0, size = 24, interactive = false, disabled = false, onChange, className = "" }) {
   const [hover, setHover] = useState(0);
   const display = hover || value;
 
@@ -16,11 +16,11 @@ export default function RatingStars({ value = 0, size = 24, interactive = false,
         <button
           key={n}
           type="button"
-          disabled={!interactive}
+          disabled={!interactive || disabled}
           onClick={() => onChange?.(n)}
-          onMouseEnter={() => interactive && setHover(n)}
+          onMouseEnter={() => interactive && !disabled && setHover(n)}
           className={
-            interactive
+            interactive && !disabled
               ? "cursor-pointer transition-transform hover:scale-115 active:scale-95"
               : "cursor-default"
           }

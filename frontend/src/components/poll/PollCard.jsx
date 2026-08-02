@@ -89,20 +89,26 @@ export default function PollCard({
   const [commentText, setCommentText] = useState("");
   const [commentBusy, setCommentBusy] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(null);
+  const [localVote, setLocalVote] = useState(null);
 
   const closed = poll.status === "closed" || (poll.expiresAt && new Date(poll.expiresAt) < new Date());
   const draft = poll.status === "draft";
-  const total = poll.totalVotes || 0;
-  const myVote = Array.isArray(poll.myVote) ? poll.myVote.map((id) => String(id)) : null;
+  const total = localVote ? localVote.totalVotes : poll.totalVotes || 0;
+  const myVote = localVote
+    ? [String(localVote.myVote)]
+    : Array.isArray(poll.myVote)
+      ? poll.myVote.map((id) => String(id))
+      : null;
   const voted = !!myVote && myVote.length > 0;
-  const canUndo = voted && !!onUnvote && !closed;
+  const canUndo = voted && (!!onUnvote || !!user) && !closed;
   const interactive = !voted && !!onVote && !closed && !draft;
+  const liveOptions = localVote ? localVote.options : poll.options || [];
 
   const options = [...(poll.options || [])].sort((a, b) => (b.votesCount || 0) - (a.votesCount || 0));
   const imageOptions = options.map((o) => ({ url: o.image?.url, text: o.text })).filter((o) => o.url);
 
   const isRating = poll.type === "rating";
-  const ratingOptions = poll.options || [];
+  const ratingOptions = liveOptions;
   const ratingLevels = isRating
     ? ratingOptions.map((o, i) => ({
         id: o._id,
@@ -117,6 +123,48 @@ export default function PollCard({
   const myLevel = isRating && myVote
     ? ratingLevels.find((r) => myVote.includes(String(r.id)))?.level || 0
     : 0;
+  const ratingInteractive = isRating && !voted && !closed && !draft && (!!onVote || !!user);
+
+  const handleRate = async (level) => {
+    const r = ratingLevels[level - 1];
+    if (!r || !ratingInteractive) return;
+    if (onVote) {
+      onVote(poll._id, [r.id]);
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await pollService.vote(poll._id, [r.id]);
+      setLocalVote({
+        totalVotes: res.data.poll.totalVotes,
+        options: res.data.poll.options,
+        myVote: r.id,
+      });
+      toast.success(`Rated ${level} star${level > 1 ? "s" : ""}!`);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Could not cast rating.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleUndo = async () => {
+    if (!voted || !canUndo) return;
+    if (onUnvote) {
+      onUnvote(poll._id);
+      return;
+    }
+    setBusy(true);
+    try {
+      await pollService.unvote(poll._id);
+      setLocalVote(null);
+      toast.success("Rating removed.");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Could not remove rating.");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const startEdit = () => {
     setEditTitle(poll.title || "");
@@ -331,48 +379,44 @@ export default function PollCard({
         {/* Vote bars */}
         {isRating ? (
           <div className="py-1">
-            {interactive ? (
+            {ratingInteractive ? (
               <div className="flex flex-col items-center gap-2 py-4 rounded-xl bg-zinc-800/40">
                 <RatingStars
                   interactive
                   size={32}
-                  onChange={(level) => {
-                    const r = ratingLevels[level - 1];
-                    if (r) onVote(poll._id, [r.id]);
-                  }}
+                  disabled={busy}
+                  onChange={handleRate}
                 />
                 <p className="text-xs text-zinc-500">
-                  Tap to rate · {total} {total === 1 ? "rating" : "ratings"}
+                  {busy ? "Submitting..." : `Tap to rate · ${total} ${total === 1 ? "rating" : "ratings"}`}
                 </p>
               </div>
             ) : (
               <div className="flex flex-col items-center gap-1.5 py-2">
-                {total > 0 ? (
-                  <>
-                    <div className="flex items-center gap-2">
-                      <RatingStars value={avgRating} size={20} />
-                      <span className="text-sm text-zinc-300">
-                        <span className="font-bold text-amber-400 tabular-nums">
-                          {avgRating.toFixed(1)}
-                        </span>{" "}
-                        / 5
-                      </span>
-                    </div>
-                    <p className="text-xs text-zinc-500">
-                      {total} {total === 1 ? "rating" : "ratings"}
-                    </p>
-                    {myLevel > 0 && (
-                      <button
-                        onClick={() => canUndo && onUnvote(poll._id)}
-                        className={`text-xs font-medium ${canUndo ? "text-emerald-400 hover:underline cursor-pointer" : "text-zinc-500"}`}
-                      >
-                        You rated {"⭐".repeat(myLevel)}
-                        {canUndo ? " · tap to undo" : ""}
-                      </button>
-                    )}
-                  </>
-                ) : (
-                  <p className="text-sm text-zinc-500">No ratings yet</p>
+                <div className="flex items-center gap-2">
+                  <RatingStars value={avgRating} size={20} />
+                  {total > 0 && (
+                    <span className="text-sm text-zinc-300">
+                      <span className="font-bold text-amber-400 tabular-nums">
+                        {avgRating.toFixed(1)}
+                      </span>{" "}
+                      / 5
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-zinc-500">
+                  {total > 0
+                    ? `${total} ${total === 1 ? "rating" : "ratings"}`
+                    : "No ratings yet"}
+                </p>
+                {myLevel > 0 && (
+                  <button
+                    onClick={() => canUndo && handleUndo()}
+                    className={`text-xs font-medium ${canUndo ? "text-emerald-400 hover:underline cursor-pointer" : "text-zinc-500"}`}
+                  >
+                    You rated {"⭐".repeat(myLevel)}
+                    {canUndo ? " · tap to undo" : ""}
+                  </button>
                 )}
               </div>
             )}
