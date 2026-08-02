@@ -6,6 +6,7 @@ import {
   deletePoll,
   setPollStatus,
   listPolls,
+  getPollTypeStats,
 } from "../controllers/poll.controller.js";
 import { castVote, getPollResults, removeVote } from "../controllers/vote.controller.js";
 import {
@@ -23,6 +24,7 @@ import { voteLimiter } from "../middlewares/rateLimit.middleware.js";
 
 const router = express.Router();
 
+router.get("/trending", getPollTypeStats);
 router.get("/", optionalAuth, listPolls);
 router.post("/", protect, createPollRules, validate, createPoll);
 

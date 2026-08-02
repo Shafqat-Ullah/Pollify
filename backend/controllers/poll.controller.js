@@ -165,7 +165,21 @@ export const setPollStatus = asyncHandler(async (req, res) => {
   res.status(200).json({ success: true, data: { poll } });
 });
 
-// @route GET /api/polls   — explore feed with search, category, sort, pagination
+// @route GET /api/polls/trending — counts of published polls grouped by type
+export const getPollTypeStats = asyncHandler(async (req, res) => {
+  const stats = await Poll.aggregate([
+    { $match: { status: "published", visibility: "public" } },
+    { $group: { _id: "$type", count: { $sum: 1 } } },
+    { $sort: { count: -1 } },
+  ]);
+
+  res.status(200).json({
+    success: true,
+    data: { types: stats.map((s) => ({ type: s._id, count: s.count })) },
+  });
+});
+
+// @route GET /api/polls
 export const listPolls = asyncHandler(async (req, res) => {
   const { search, category, tag, type, sort = "newest", page = 1, limit = 12, author, feed } = req.query;
 

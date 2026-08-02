@@ -2,6 +2,7 @@ import api from "./api";
 
 export const pollService = {
   list: (params) => api.get("/polls", { params }).then((r) => r.data),
+  typeStats: () => api.get("/polls/trending").then((r) => r.data),
   get: (id) => api.get(`/polls/${id}`).then((r) => r.data),
   create: (payload) => api.post("/polls", payload).then((r) => r.data),
   update: (id, payload) => api.put(`/polls/${id}`, payload).then((r) => r.data),

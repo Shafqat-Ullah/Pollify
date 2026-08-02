@@ -52,6 +52,11 @@ export default function Dashboard() {
     queryFn: userService.getDashboard,
   });
 
+  const { data: typeStats } = useQuery({
+    queryKey: ["poll-type-stats"],
+    queryFn: pollService.typeStats,
+  });
+
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
     queryKey: ["dashboard-feed", tab, type],
     queryFn: ({ pageParam = 1 }) =>
@@ -85,11 +90,13 @@ export default function Dashboard() {
   const firstName = user?.name?.split(" ")[0] || "there";
 
   const typeCounts = {};
-  polls.forEach((p) => {
-    typeCounts[p.type] = (typeCounts[p.type] || 0) + 1;
+  const TYPES = ["yesno", "single", "rating", "image", "open"];
+  (typeStats?.data?.types || []).forEach((t) => {
+    typeCounts[t.type] = t.count;
   });
   const maxTypeCount = Math.max(1, ...Object.values(typeCounts));
-  const typeList = Object.entries(TYPE_META)
+  const typeList = TYPES
+    .map((key) => [key, TYPE_META[key]])
     .filter(([key]) => typeCounts[key])
     .sort((a, b) => (typeCounts[b[0]] || 0) - (typeCounts[a[0]] || 0));
 
