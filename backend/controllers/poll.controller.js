@@ -192,7 +192,15 @@ export const listPolls = asyncHandler(async (req, res) => {
     if (!req.user) throw new ApiError(401, "Please log in to view your following feed.");
     query.author = { $in: req.user.following };
   }
-  if (search) query.$text = { $search: search };
+  if (search) {
+    const rx = new RegExp(escapeRegex(search), "i");
+    query.$or = [
+      { title: rx },
+      { description: rx },
+      { tags: rx },
+      { "options.text": rx },
+    ];
+  }
 
   const sortMap = {
     newest: { createdAt: -1 },
