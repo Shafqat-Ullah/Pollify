@@ -315,7 +315,7 @@ export default function PollCard({
                 <div
                   key={o._id || o.text}
                   onClick={() => handleOptionClick(o)}
-                  className={`relative h-9 rounded-xl bg-zinc-800/60 overflow-hidden ${clickable ? "cursor-pointer hover:bg-zinc-800" : ""} ${mine ? "ring-1 ring-emerald-500/40" : ""}`}
+                  className={`relative ${o.image?.url ? "py-1.5" : "h-9"} rounded-xl bg-zinc-800/60 overflow-hidden ${clickable ? "cursor-pointer hover:bg-zinc-800" : ""} ${mine ? "ring-1 ring-emerald-500/40" : ""}`}
                 >
                   <motion.div
                     className={`absolute inset-y-0 left-0 ${barColor} opacity-15`}
@@ -327,7 +327,14 @@ export default function PollCard({
                   <div className="relative flex items-center justify-between gap-3 px-3 h-full">
                     <span className="text-xs text-zinc-300 truncate flex items-center gap-1.5">
                       {mine && <CheckCircle size={12} className="text-emerald-400 shrink-0" />}
-                      <span className={mine ? "text-emerald-300 font-semibold" : ""}>
+                      {o.image?.url ? (
+                        <img
+                          src={o.image.url}
+                          alt={o.text || "Image option"}
+                          className="w-10 h-10 rounded-lg object-cover shrink-0"
+                        />
+                      ) : null}
+                      <span className={`truncate ${mine ? "text-emerald-300 font-semibold" : ""}`}>
                         {o.text || (o.image?.url ? "Image" : "Option")}
                       </span>
                     </span>

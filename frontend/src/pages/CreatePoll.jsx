@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { CircleCheck, List, Star, Image as ImageIcon, MessageSquareText, Plus, X, AlertCircle } from "lucide-react";
 import toast from "react-hot-toast";
@@ -44,6 +44,11 @@ export default function CreatePoll() {
     e.target.value = "";
   };
   const removeImage = (i) => setImages((prev) => prev.filter((_, idx) => idx !== i));
+
+  const imagePreviews = useMemo(() => images.map((f) => URL.createObjectURL(f)), [images]);
+  useEffect(() => {
+    return () => imagePreviews.forEach((url) => URL.revokeObjectURL(url));
+  }, [imagePreviews]);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -180,7 +185,7 @@ export default function CreatePoll() {
                   key={i}
                   className="relative aspect-square rounded-xl overflow-hidden bg-surface-light border border-border"
                 >
-                  <img src={URL.createObjectURL(img)} alt="" className="w-full h-full object-cover" />
+                  <img src={imagePreviews[i]} alt={img.name} className="w-full h-full object-cover" />
                   <button
                     type="button"
                     onClick={() => removeImage(i)}

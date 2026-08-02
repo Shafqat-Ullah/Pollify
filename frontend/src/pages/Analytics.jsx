@@ -102,7 +102,14 @@ export default function Analytics() {
               return (
                 <div key={opt._id}>
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-sm text-zinc-300 truncate">
+                    <span className="text-sm text-zinc-300 truncate flex items-center gap-2">
+                      {opt.image?.url && (
+                        <img
+                          src={opt.image.url}
+                          alt={opt.text || "Image option"}
+                          className="w-9 h-9 rounded-lg object-cover shrink-0"
+                        />
+                      )}
                       {opt.text || (opt.image?.url ? "Image option" : "Option")}
                     </span>
                     <span className="text-sm font-semibold text-zinc-100 tabular-nums shrink-0 ml-3">

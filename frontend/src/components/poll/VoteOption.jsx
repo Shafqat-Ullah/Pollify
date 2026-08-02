@@ -22,14 +22,30 @@ export default function VoteOption({ option, percentage, isSelected, hasVoted, o
         />
       )}
       <div className="relative flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          {isSelected && (
+        {option.image?.url ? (
+          <div className="flex items-center gap-3">
+            {isSelected && (
               <span className="w-5 h-5 rounded-full bg-primary flex items-center justify-center shrink-0">
-              <Check className="w-3 h-3 text-white" />
-            </span>
-          )}
-          <span className="text-sm text-text">{option.text}</span>
-        </div>
+                <Check className="w-3 h-3 text-white" />
+              </span>
+            )}
+            <img
+              src={option.image.url}
+              alt={option.text || "Image option"}
+              className="w-14 h-14 rounded-lg object-cover shrink-0"
+            />
+            {option.text && <span className="text-sm text-text">{option.text}</span>}
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            {isSelected && (
+              <span className="w-5 h-5 rounded-full bg-primary flex items-center justify-center shrink-0">
+                <Check className="w-3 h-3 text-white" />
+              </span>
+            )}
+            <span className="text-sm text-text">{option.text}</span>
+          </div>
+        )}
         {hasVoted && (
           <span className="text-sm font-semibold text-primary shrink-0">{percentage}%</span>
         )}
