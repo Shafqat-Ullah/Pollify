@@ -125,13 +125,17 @@ export const setPollStatus = asyncHandler(async (req, res) => {
 
 // @route GET /api/polls   — explore feed with search, category, sort, pagination
 export const listPolls = asyncHandler(async (req, res) => {
-  const { search, category, tag, type, sort = "newest", page = 1, limit = 12, author } = req.query;
+  const { search, category, tag, type, sort = "newest", page = 1, limit = 12, author, feed } = req.query;
 
   const query = { status: "published", visibility: "public" };
   if (category) query.category = category;
   if (tag) query.tags = tag;
   if (type) query.type = type;
   if (author) query.author = author;
+  if (feed === "following") {
+    if (!req.user) throw new ApiError(401, "Please log in to view your following feed.");
+    query.author = { $in: req.user.following };
+  }
   if (search) query.$text = { $search: search };
 
   const sortMap = {

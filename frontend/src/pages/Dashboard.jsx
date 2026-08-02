@@ -9,9 +9,10 @@ import {
   TrendingUp,
   ChevronRight,
   List,
-  CheckSquare,
+  CircleCheck,
+  Star,
   Image as ImageIcon,
-  MessageSquare,
+  MessageSquareText,
   X,
 } from "lucide-react";
 import { pollService, userService } from "../services/pollService";
@@ -20,24 +21,29 @@ import PollCard from "../components/poll/PollCard";
 import { PollCardSkeleton, EmptyState } from "../components/ui/States";
 
 const TYPE_FILTERS = [
-  { value: "single", label: "Single", icon: List },
-  { value: "multiple", label: "Multiple", icon: CheckSquare },
+  { value: "", label: "All", icon: Sparkles },
+  { value: "yesno", label: "Yes / No", icon: CircleCheck },
+  { value: "single", label: "Single Choice", icon: List },
+  { value: "rating", label: "Rating", icon: Star },
   { value: "image", label: "Image", icon: ImageIcon },
-  { value: "text", label: "Text", icon: MessageSquare },
+  { value: "open", label: "Open Ended", icon: MessageSquareText },
 ];
 
 const TYPE_META = {
-  single: { label: "Single choice", color: "bg-emerald-500" },
-  multiple: { label: "Multiple choice", color: "bg-sky-500" },
+  yesno: { label: "Yes / No", color: "bg-emerald-500" },
+  single: { label: "Single choice", color: "bg-sky-500" },
+  rating: { label: "Rating", color: "bg-amber-500" },
   image: { label: "Image polls", color: "bg-violet-500" },
-  text: { label: "Open ended", color: "bg-amber-500" },
+  open: { label: "Open ended", color: "bg-rose-500" },
+  multiple: { label: "Multiple choice", color: "bg-teal-500" },
+  text: { label: "Text poll", color: "bg-orange-500" },
 };
 
 const TREND_COLORS = ["bg-emerald-500", "bg-sky-500", "bg-violet-500", "bg-amber-500", "bg-rose-500"];
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const [tab, setTab] = useState("explore");
+  const [tab, setTab] = useState("all");
   const [type, setType] = useState("");
   const loaderRef = useRef(null);
 
@@ -49,7 +55,13 @@ export default function Dashboard() {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
     queryKey: ["dashboard-feed", tab, type],
     queryFn: ({ pageParam = 1 }) =>
-      pollService.list({ sort: "newest", type: type || undefined, page: pageParam, limit: 8 }),
+      pollService.list({
+        sort: "newest",
+        type: type || undefined,
+        feed: tab === "following" ? "following" : undefined,
+        page: pageParam,
+        limit: 8,
+      }),
     getNextPageParam: (lastPage) =>
       lastPage.data.pagination.hasMore ? lastPage.data.pagination.page + 1 : undefined,
     initialPageParam: 1,
@@ -122,9 +134,9 @@ export default function Dashboard() {
         {/* Feed tabs */}
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setTab("explore")}
+            onClick={() => setTab("all")}
             className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
-              tab === "explore"
+              tab === "all"
                 ? "bg-zinc-800 text-white border border-zinc-700"
                 : "text-zinc-600 hover:text-zinc-400"
             }`}
@@ -144,64 +156,53 @@ export default function Dashboard() {
         </div>
 
         {/* Poll-type filter chips */}
-        {tab === "explore" && (
-          <div className="flex flex-wrap items-center gap-1.5">
+        <div className="flex flex-wrap items-center gap-1.5">
+          {TYPE_FILTERS.map((f) => (
             <button
-              onClick={() => setType("")}
+              key={f.value || "all"}
+              onClick={() => setType(f.value)}
               className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium transition-all ${
-                type === ""
+                type === f.value
                   ? "bg-zinc-800 text-zinc-200 border border-zinc-700"
                   : "text-zinc-600 hover:text-zinc-400 hover:bg-zinc-900 border border-transparent"
               }`}
             >
-              <Sparkles size={12} /> All
+              <f.icon size={12} /> {f.label}
             </button>
-            {TYPE_FILTERS.map((f) => (
-              <button
-                key={f.value}
-                onClick={() => setType(f.value)}
-                className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium transition-all ${
-                  type === f.value
-                    ? "bg-zinc-800 text-zinc-200 border border-zinc-700"
-                    : "text-zinc-600 hover:text-zinc-400 hover:bg-zinc-900 border border-transparent"
-                }`}
-              >
-                <f.icon size={12} /> {f.label}
-              </button>
-            ))}
-            {type && (
-              <button
-                onClick={() => setType("")}
-                className="inline-flex items-center gap-1 px-2 py-1.5 rounded-xl text-xs font-medium text-zinc-700 hover:text-zinc-500 transition-colors"
-              >
-                <X size={11} /> Clear
-              </button>
-            )}
-          </div>
-        )}
+          ))}
+          {type && (
+            <button
+              onClick={() => setType("")}
+              className="inline-flex items-center gap-1 px-2 py-1.5 rounded-xl text-xs font-medium text-zinc-700 hover:text-zinc-500 transition-colors"
+            >
+              <X size={11} /> Clear
+            </button>
+          )}
+        </div>
 
         {/* Feed */}
-        {tab === "following" ? (
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl">
-            <EmptyState
-              icon={UsersRound}
-              title="Your following feed"
-              description="Polls from people you follow will appear here. Follow creators from the Explore tab to build your feed."
-              action={<Link to="/explore" className="btn-primary text-sm">Explore polls</Link>}
-            />
-          </div>
-        ) : isLoading ? (
+        {isLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 3 }).map((_, i) => <PollCardSkeleton key={i} />)}
           </div>
         ) : polls.length === 0 ? (
           <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-14 text-center">
             <EmptyState
-              icon={Sparkles}
-              title="Nothing here yet"
-              description="Be the first to ask something and kick off the discussion."
+              icon={tab === "following" ? UsersRound : Sparkles}
+              title={tab === "following" ? "Nobody you follow has posted yet" : "Nothing here yet"}
+              description={
+                tab === "following"
+                  ? "Follow creators to see their polls."
+                  : "Be the first to ask something and kick off the discussion."
+              }
               action={
-                <Link to="/polls/create" className="btn-primary text-sm">Create a poll</Link>
+                tab === "following" ? (
+                  <Link to="/" onClick={() => setTab("all")} className="btn-primary text-sm">
+                    Explore polls
+                  </Link>
+                ) : (
+                  <Link to="/polls/create" className="btn-primary text-sm">Create a poll</Link>
+                )
               }
             />
           </div>

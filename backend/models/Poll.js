@@ -27,7 +27,7 @@ const pollSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["single", "multiple", "image", "text"],
+      enum: ["single", "multiple", "image", "text", "yesno", "rating", "open"],
       default: "single",
     },
     options: {
