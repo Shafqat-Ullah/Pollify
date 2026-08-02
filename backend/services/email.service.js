@@ -71,6 +71,13 @@ const sendMail = async (to, subject, html) => {
 
   const transport = await getTransporter();
   if (!transport) {
+    // In production a silently-unsent OTP is dangerous (user thinks their reset
+    // email is on the way). Surface an error so auth flows fail loudly instead
+    // of pretending the email was delivered. Dev keeps the console fallback.
+    if (process.env.NODE_ENV === "production") {
+      console.error(`[EMAIL] SMTP unavailable in production — refusing to fake-send "${subject}" to ${to}.`);
+      return { ok: false, emailed: false };
+    }
     console.warn(`[EMAIL] No SMTP available for "${subject}" to ${to} — OTP delivered to console.`);
     return { ok: true, emailed: false };
   }
