@@ -110,6 +110,13 @@ export const updatePoll = asyncHandler(async (req, res) => {
     "expiresAt",
     "scheduledAt",
   ];
+
+  // Category may come as a name (from inline edit on My Polls). Resolve or create it.
+  if (req.body.category && typeof req.body.category === "string") {
+    const found = await Category.findOne({ name: { $regex: `^${escapeRegex(req.body.category)}$`, $options: "i" } });
+    req.body.category = found ? found._id : (await Category.create({ name: req.body.category, slug: slugify(req.body.category) }))._id;
+  }
+
   editableFields.forEach((field) => {
     if (req.body[field] !== undefined) poll[field] = req.body[field];
   });
@@ -188,10 +195,23 @@ export const listPolls = asyncHandler(async (req, res) => {
     Poll.countDocuments(query),
   ]);
 
+  // Attach the current user's vote (if any) to each poll so cards can show "you · click to undo"
+  const voteMap = new Map();
+  if (req.user) {
+    const votes = await Vote.find({ poll: { $in: polls.map((p) => p._id) }, voter: req.user._id });
+    votes.forEach((v) => voteMap.set(String(v.poll), v.selectedOptions.map((id) => String(id))));
+  }
+
+  const result = polls.map((p) => {
+    const obj = p.toObject();
+    obj.myVote = voteMap.get(String(p._id)) || null;
+    return obj;
+  });
+
   res.status(200).json({
     success: true,
     data: {
-      polls,
+      polls: result,
       pagination: {
         page: Number(page),
         limit: Number(limit),

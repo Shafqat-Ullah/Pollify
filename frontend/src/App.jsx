@@ -7,6 +7,7 @@ import AdminRoute from "./routes/AdminRoute";
 import Landing from "./pages/Landing";
 import Explore from "./pages/Explore";
 import PollDetail from "./pages/PollDetail";
+import Analytics from "./pages/Analytics";
 import CreatePoll from "./pages/CreatePoll";
 import Dashboard from "./pages/Dashboard";
 import MyPolls from "./pages/MyPolls";
@@ -45,6 +46,7 @@ export default function App() {
         <Route element={<MainLayout />}>
           <Route path="/explore" element={<Explore />} />
           <Route path="/polls/:id" element={<PollDetail />} />
+          <Route path="/polls/:id/analytics" element={<Analytics />} />
           <Route path="/profile/:username" element={<Profile />} />
 
           <Route element={<ProtectedRoute />}>

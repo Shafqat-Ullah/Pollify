@@ -57,6 +57,27 @@ export const castVote = asyncHandler(async (req, res) => {
   res.status(201).json({ success: true, data: { vote, poll } });
 });
 
+// @route POST /api/polls/:id/unvote
+export const removeVote = asyncHandler(async (req, res) => {
+  const poll = await Poll.findById(req.params.id);
+  if (!poll) throw new ApiError(404, "Poll not found.");
+
+  const vote = await Vote.findOne({ poll: poll._id, voter: req.user._id });
+  if (!vote) throw new ApiError(400, "You have not voted on this poll.");
+
+  const selected = vote.selectedOptions.map((id) => String(id));
+  poll.options.forEach((opt) => {
+    if (selected.includes(String(opt._id))) {
+      opt.votesCount = Math.max(0, (opt.votesCount || 0) - 1);
+    }
+  });
+  poll.totalVotes = Math.max(0, poll.totalVotes - 1);
+
+  await Promise.all([vote.deleteOne(), poll.save()]);
+
+  res.status(200).json({ success: true, data: { poll } });
+});
+
 // @route GET /api/polls/:id/results
 export const getPollResults = asyncHandler(async (req, res) => {
   const poll = await Poll.findById(req.params.id).select("title options totalVotes type");

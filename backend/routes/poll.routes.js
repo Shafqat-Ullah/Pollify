@@ -7,7 +7,7 @@ import {
   setPollStatus,
   listPolls,
 } from "../controllers/poll.controller.js";
-import { castVote, getPollResults } from "../controllers/vote.controller.js";
+import { castVote, getPollResults, removeVote } from "../controllers/vote.controller.js";
 import {
   addComment,
   getComments,
@@ -32,6 +32,7 @@ router.delete("/:id", protect, deletePoll);
 router.patch("/:id/status", protect, setPollStatus);
 
 router.post("/:id/vote", protect, voteLimiter, voteRules, validate, castVote);
+router.post("/:id/unvote", protect, voteLimiter, removeVote);
 router.get("/:id/results", getPollResults);
 
 router.get("/:id/comments", getComments);

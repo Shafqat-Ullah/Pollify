@@ -4,20 +4,7 @@ import { CircleCheck, List, Star, Image as ImageIcon, MessageSquareText, Plus, X
 import toast from "react-hot-toast";
 import { pollService } from "../services/pollService";
 import Button from "../components/ui/Button";
-
-const CATEGORIES = [
-  "General",
-  "Tech",
-  "Food",
-  "Sports",
-  "Entertainment",
-  "Gaming",
-  "Music",
-  "Travel",
-  "Education",
-  "Lifestyle",
-  "Other",
-];
+import { CATEGORIES } from "../constants";
 
 const TYPES = {
   yesno: { label: "Yes / No", Icon: CircleCheck },
