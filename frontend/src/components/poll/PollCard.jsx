@@ -1,8 +1,23 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { BarChart3, MessageCircle, Heart, Lock, Pencil, RotateCcw, Trash2, CheckCircle } from "lucide-react";
+import {
+  BarChart3,
+  MessageCircle,
+  Bookmark,
+  Share2,
+  Loader2,
+  Send,
+  Lock,
+  Pencil,
+  RotateCcw,
+  Trash2,
+  CheckCircle,
+} from "lucide-react";
 import { motion } from "framer-motion";
+import toast from "react-hot-toast";
 import { CATEGORIES } from "../../constants";
+import { pollService } from "../../services/pollService";
+import { useAuth } from "../../contexts/AuthContext";
 
 const COLORS = ["emerald", "sky", "violet", "amber", "rose", "teal"];
 
@@ -59,10 +74,18 @@ export default function PollCard({
   const barColor = BAR_COLORS[color] || BAR_COLORS.emerald;
   const tagColor = TAG_COLORS[color] || TAG_COLORS.emerald;
 
+  const { user } = useAuth();
+
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editCategory, setEditCategory] = useState("General");
   const [busy, setBusy] = useState(false);
+
+  const [saved, setSaved] = useState(!!poll.isSaved);
+  const [showComments, setShowComments] = useState(false);
+  const [comments, setComments] = useState(null);
+  const [commentText, setCommentText] = useState("");
+  const [commentBusy, setCommentBusy] = useState(false);
 
   const closed = poll.status === "closed" || (poll.expiresAt && new Date(poll.expiresAt) < new Date());
   const total = poll.totalVotes || 0;
@@ -95,6 +118,59 @@ export default function PollCard({
       onUnvote(poll._id);
     } else if (interactive) {
       onVote(poll._id, [opt._id]);
+    }
+  };
+
+  const toggleComments = async () => {
+    const next = !showComments;
+    setShowComments(next);
+    if (next && !comments) {
+      try {
+        const res = await pollService.getComments(poll._id);
+        setComments(res.data.comments || []);
+      } catch {
+        setComments([]);
+      }
+    }
+  };
+
+  const submitComment = async () => {
+    if (!commentText.trim()) return;
+    setCommentBusy(true);
+    try {
+      await pollService.addComment(poll._id, commentText.trim());
+      setCommentText("");
+      const res = await pollService.getComments(poll._id);
+      setComments(res.data.comments || []);
+      toast.success("Comment posted.");
+    } catch {
+      toast.error("Could not post comment. Please log in.");
+    } finally {
+      setCommentBusy(false);
+    }
+  };
+
+  const share = async () => {
+    const url = `${window.location.origin}/polls/${poll._id}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Link copied!");
+    } catch {
+      toast.error("Could not copy link.");
+    }
+  };
+
+  const toggleSave = async () => {
+    if (!user) return toast.error("Log in to save polls.");
+    const prev = saved;
+    setSaved(!prev);
+    try {
+      const res = await pollService.bookmark(poll._id);
+      setSaved(!!res.data.bookmarked);
+      toast.success(res.data.bookmarked ? "Poll saved." : "Poll removed from saved.");
+    } catch {
+      setSaved(prev);
+      toast.error("Could not save poll.");
     }
   };
 
@@ -273,16 +349,82 @@ export default function PollCard({
           <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-500/8 text-emerald-500 px-2.5 py-1.5 text-xs font-semibold mr-1">
             <BarChart3 size={14} /> {total} {total === 1 ? "vote" : "votes"}
           </span>
-          <Link
-            to={`/polls/${poll._id}`}
-            className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-300 hover:bg-zinc-800 transition-colors"
+          <button
+            onClick={toggleComments}
+            className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${showComments ? "text-emerald-400 bg-zinc-800" : "text-zinc-600 hover:text-zinc-300 hover:bg-zinc-800"}`}
           >
             <MessageCircle size={14} /> {poll.commentsCount ?? 0}
-          </Link>
-          <span className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-600">
-            <Heart size={14} /> {poll.likesCount ?? 0}
-          </span>
+          </button>
+          <button
+            onClick={share}
+            className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-300 hover:bg-zinc-800 transition-colors"
+          >
+            <Share2 size={14} /> Share
+          </button>
+          <button
+            onClick={toggleSave}
+            className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${saved ? "text-amber-400" : "text-zinc-600 hover:text-zinc-300 hover:bg-zinc-800"}`}
+          >
+            <Bookmark size={14} fill={saved ? "currentColor" : "none"} /> {saved ? "Saved" : "Save"}
+          </button>
         </div>
+
+        {/* Comments */}
+        {showComments && (
+          <div className="mt-3 space-y-2 border-t border-zinc-800/60 pt-3">
+            {comments === null ? (
+              <div className="flex items-center gap-2 text-xs text-zinc-600">
+                <Loader2 size={13} className="animate-spin" /> Loading comments...
+              </div>
+            ) : comments.length === 0 ? (
+              <p className="text-xs text-zinc-600">No comments yet. Be the first!</p>
+            ) : (
+              comments.map((c) => (
+                <div key={c._id} className="flex items-start gap-2">
+                  <div className="w-6 h-6 rounded-full bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center text-emerald-400 font-bold text-[10px] overflow-hidden shrink-0">
+                    {c.author?.avatar?.url ? (
+                      <img src={c.author.avatar.url} alt={c.author.name} className="w-full h-full object-cover" />
+                    ) : (
+                      c.author?.name?.[0]?.toUpperCase() || "U"
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1 rounded-xl bg-zinc-800/50 px-3 py-2">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[11px] font-semibold text-zinc-300">
+                        {c.author?.name || "Anonymous"}
+                      </span>
+                      <span className="text-[10px] text-zinc-600">@{c.author?.username}</span>
+                      <span className="text-[10px] text-zinc-700">{timeAgo(c.createdAt)}</span>
+                    </div>
+                    <p className="text-xs text-zinc-400 mt-0.5 break-words">{c.content}</p>
+                  </div>
+                </div>
+              ))
+            )}
+            {user ? (
+              <div className="flex items-center gap-2">
+                <input
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && submitComment()}
+                  placeholder="Write a comment..."
+                  className="flex-1 rounded-xl bg-zinc-800/60 border border-zinc-700/60 px-3 py-2 text-xs text-zinc-200 outline-none focus:border-emerald-500/60"
+                />
+                <button
+                  onClick={submitComment}
+                  disabled={commentBusy || !commentText.trim()}
+                  className="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-emerald-500 text-white hover:bg-emerald-400 disabled:opacity-40 shrink-0"
+                >
+                  {commentBusy ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                </button>
+              </div>
+            ) : (
+              <Link to="/login" className="text-xs text-emerald-400 hover:underline block">
+                Log in to comment
+              </Link>
+            )}
+          </div>
+        )}
       </div>
     </motion.div>
   );

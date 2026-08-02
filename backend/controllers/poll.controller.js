@@ -1,6 +1,7 @@
 import Poll from "../models/Poll.js";
 import Vote from "../models/Vote.js";
 import Category from "../models/Category.js";
+import Bookmark from "../models/Bookmark.js";
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
 
@@ -86,11 +87,13 @@ export const getPoll = asyncHandler(async (req, res) => {
   await poll.save();
 
   let userVote = null;
+  let isSaved = false;
   if (req.user) {
     userVote = await Vote.findOne({ poll: poll._id, voter: req.user._id });
+    isSaved = (await Bookmark.exists({ poll: poll._id, user: req.user._id })) !== null;
   }
 
-  res.status(200).json({ success: true, data: { poll, userVote } });
+  res.status(200).json({ success: true, data: { poll, userVote, isSaved } });
 });
 
 // @route PUT /api/polls/:id
@@ -197,14 +200,21 @@ export const listPolls = asyncHandler(async (req, res) => {
 
   // Attach the current user's vote (if any) to each poll so cards can show "you · click to undo"
   const voteMap = new Map();
+  const savedSet = new Set();
   if (req.user) {
     const votes = await Vote.find({ poll: { $in: polls.map((p) => p._id) }, voter: req.user._id });
     votes.forEach((v) => voteMap.set(String(v.poll), v.selectedOptions.map((id) => String(id))));
+    const bookmarks = await Bookmark.find({
+      user: req.user._id,
+      poll: { $in: polls.map((p) => p._id) },
+    });
+    bookmarks.forEach((b) => savedSet.add(String(b.poll)));
   }
 
   const result = polls.map((p) => {
     const obj = p.toObject();
     obj.myVote = voteMap.get(String(p._id)) || null;
+    obj.isSaved = savedSet.has(String(p._id));
     return obj;
   });
 

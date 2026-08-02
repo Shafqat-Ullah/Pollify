@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Heart, Bookmark, Share2, Flag, Send } from "lucide-react";
+import { Heart, Bookmark, Share2, Flag, Send, MessageCircle } from "lucide-react";
 import toast from "react-hot-toast";
 import { pollService } from "../services/pollService";
 import { useAuth } from "../contexts/AuthContext";
@@ -130,12 +130,23 @@ export default function PollDetail() {
 
         {!hasVoted && poll.status === "published" && (
           <Button onClick={submitVote} loading={voting} className="w-full mb-2">
-            Cast vote
+            Cast vote · {totalVotes} {totalVotes === 1 ? "vote" : "votes"}
           </Button>
+        )}
+        {hasVoted && (
+          <p className="text-center text-sm text-emerald-500 font-medium mb-2">
+            You voted · {totalVotes} {totalVotes === 1 ? "vote" : "votes"}
+          </p>
         )}
 
         <div className="flex items-center gap-4 pt-4 border-t border-border text-sm text-muted">
           <span>{totalVotes} votes</span>
+          <button
+            onClick={() => document.getElementById("comments")?.scrollIntoView({ behavior: "smooth" })}
+            className="flex items-center gap-1.5 hover:text-primary"
+          >
+            <MessageCircle className="w-4 h-4" /> {commentsData?.data.comments.length || 0}
+          </button>
           <button onClick={handleLike} className="flex items-center gap-1.5 hover:text-primary">
             <Heart className="w-4 h-4" /> {poll.likesCount}
           </button>
@@ -160,7 +171,7 @@ export default function PollDetail() {
         </div>
       </div>
 
-      <div className="glass-card p-6">
+      <div className="glass-card p-6" id="comments">
         <h2 className="font-display font-semibold mb-4">Comments ({commentsData?.data.comments.length || 0})</h2>
         {user && (
           <div className="flex gap-2 mb-5">
