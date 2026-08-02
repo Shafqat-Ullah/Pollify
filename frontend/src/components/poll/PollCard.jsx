@@ -19,6 +19,7 @@ import { pollService } from "../../services/pollService";
 import { useAuth } from "../../contexts/AuthContext";
 import ShareMenu from "./ShareMenu";
 import Lightbox from "../ui/Lightbox";
+import RatingStars from "../ui/RatingStars";
 
 const COLORS = ["emerald", "sky", "violet", "amber", "rose", "teal"];
 
@@ -99,6 +100,23 @@ export default function PollCard({
 
   const options = [...(poll.options || [])].sort((a, b) => (b.votesCount || 0) - (a.votesCount || 0));
   const imageOptions = options.map((o) => ({ url: o.image?.url, text: o.text })).filter((o) => o.url);
+
+  const isRating = poll.type === "rating";
+  const ratingOptions = poll.options || [];
+  const ratingLevels = isRating
+    ? ratingOptions.map((o, i) => ({
+        id: o._id,
+        level: (o.text?.match(/⭐/g) || []).length || i + 1,
+        votes: o.votesCount || 0,
+      }))
+    : [];
+  const avgRating =
+    isRating && total > 0
+      ? ratingLevels.reduce((s, r) => s + r.level * r.votes, 0) / total
+      : 0;
+  const myLevel = isRating && myVote
+    ? ratingLevels.find((r) => myVote.includes(String(r.id)))?.level || 0
+    : 0;
 
   const startEdit = () => {
     setEditTitle(poll.title || "");
@@ -311,7 +329,55 @@ export default function PollCard({
         )}
 
         {/* Vote bars */}
-        {options.length > 0 && (
+        {isRating ? (
+          <div className="py-1">
+            {interactive ? (
+              <div className="flex flex-col items-center gap-2 py-4 rounded-xl bg-zinc-800/40">
+                <RatingStars
+                  interactive
+                  size={32}
+                  onChange={(level) => {
+                    const r = ratingLevels[level - 1];
+                    if (r) onVote(poll._id, [r.id]);
+                  }}
+                />
+                <p className="text-xs text-zinc-500">
+                  Tap to rate · {total} {total === 1 ? "rating" : "ratings"}
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-1.5 py-2">
+                {total > 0 ? (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <RatingStars value={avgRating} size={20} />
+                      <span className="text-sm text-zinc-300">
+                        <span className="font-bold text-amber-400 tabular-nums">
+                          {avgRating.toFixed(1)}
+                        </span>{" "}
+                        / 5
+                      </span>
+                    </div>
+                    <p className="text-xs text-zinc-500">
+                      {total} {total === 1 ? "rating" : "ratings"}
+                    </p>
+                    {myLevel > 0 && (
+                      <button
+                        onClick={() => canUndo && onUnvote(poll._id)}
+                        className={`text-xs font-medium ${canUndo ? "text-emerald-400 hover:underline cursor-pointer" : "text-zinc-500"}`}
+                      >
+                        You rated {"⭐".repeat(myLevel)}
+                        {canUndo ? " · tap to undo" : ""}
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-sm text-zinc-500">No ratings yet</p>
+                )}
+              </div>
+            )}
+          </div>
+        ) : options.length > 0 ? (
           <div className="space-y-2 mb-1">
             {options.map((o, oi) => {
               const pct = total > 0 ? Math.round(((o.votesCount || 0) / total) * 100) : 0;
@@ -360,7 +426,7 @@ export default function PollCard({
               );
             })}
           </div>
-        )}
+        ) : null}
 
         <div className="flex items-center gap-0.5 mt-3 pt-3 border-t border-zinc-800/60">
           <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-500/8 text-emerald-500 px-2.5 py-1.5 text-xs font-semibold mr-1">

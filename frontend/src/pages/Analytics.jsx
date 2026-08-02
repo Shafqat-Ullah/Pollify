@@ -47,7 +47,10 @@ export default function Analytics() {
   const total = poll.totalVotes || 0;
   const maxPct = 100;
 
-  const options = [...(poll.options || [])].sort((a, b) => (b.votesCount || 0) - (a.votesCount || 0));
+  const options =
+    poll.type === "rating"
+      ? poll.options
+      : [...(poll.options || [])].sort((a, b) => (b.votesCount || 0) - (a.votesCount || 0));
 
   return (
     <div className="max-w-2xl mx-auto">

@@ -9,6 +9,7 @@ import { useRealtimePoll } from "../hooks/useRealtimePoll";
 import VoteOption from "../components/poll/VoteOption";
 import ShareMenu from "../components/poll/ShareMenu";
 import Lightbox from "../components/ui/Lightbox";
+import RatingStars from "../components/ui/RatingStars";
 import Button from "../components/ui/Button";
 
 export default function PollDetail() {
@@ -57,6 +58,36 @@ export default function PollDetail() {
   const totalVotes = poll.totalVotes;
   const expired = poll.expiresAt && new Date(poll.expiresAt) < new Date();
   const imageOptions = poll.options.map((o) => ({ url: o.image?.url, text: o.text })).filter((o) => o.url);
+
+  const isRating = poll.type === "rating";
+  const ratingLevels = isRating
+    ? poll.options.map((o, i) => ({
+        id: o._id,
+        level: (o.text?.match(/⭐/g) || []).length || i + 1,
+        votes: o.votesCount || 0,
+      }))
+    : [];
+  const avgRating =
+    isRating && totalVotes > 0
+      ? ratingLevels.reduce((s, r) => s + r.level * r.votes, 0) / totalVotes
+      : 0;
+  const maxLevelVotes = Math.max(1, ...ratingLevels.map((r) => r.votes));
+  const canRate = !hasVoted && poll.status === "published" && !expired;
+
+  const rateNow = async (level) => {
+    const r = ratingLevels[level - 1];
+    if (!r || !canRate) return;
+    setVoting(true);
+    try {
+      await pollService.vote(id, [r.id]);
+      toast.success(`Rated ${level} star${level > 1 ? "s" : ""}!`);
+      queryClient.invalidateQueries({ queryKey: ["poll", id] });
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Could not cast rating.");
+    } finally {
+      setVoting(false);
+    }
+  };
 
   const handleSelect = (optionId) => {
     if (hasVoted || expired) return;
@@ -124,19 +155,75 @@ export default function PollDetail() {
         <h1 className="font-display font-bold text-2xl mb-2">{poll.title}</h1>
         {poll.description && <p className="text-muted text-sm mb-6">{poll.description}</p>}
 
-        <div className="space-y-2.5 mb-5">
-          {poll.options.map((opt) => (
-            <VoteOption
-              key={opt._id}
-              option={opt}
-              percentage={totalVotes > 0 ? Number(((opt.votesCount / totalVotes) * 100).toFixed(1)) : 0}
-              isSelected={selected.includes(opt._id) || (hasVoted && data.data.userVote.selectedOptions.includes(opt._id))}
-              hasVoted={hasVoted}
-              onSelect={handleSelect}
-              onImageClick={() => setLightboxIndex(poll.options.findIndex((o) => o._id === opt._id))}
-            />
-          ))}
-        </div>
+        {isRating ? (
+          <div className="mb-5">
+            {canRate ? (
+              <div className="flex flex-col items-center gap-3 py-6 rounded-2xl bg-surface-light">
+                <RatingStars
+                  interactive
+                  size={44}
+                  onChange={rateNow}
+                  disabled={voting}
+                />
+                <p className="text-sm text-muted">Tap a star to rate</p>
+                {voting && <p className="text-xs text-primary">Submitting...</p>}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-3 py-4">
+                {totalVotes > 0 ? (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <RatingStars value={avgRating} size={28} />
+                      <span className="text-lg text-text">
+                        <span className="font-bold text-amber-400 tabular-nums">
+                          {avgRating.toFixed(1)}
+                        </span>{" "}
+                        / 5
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted">
+                      {totalVotes} {totalVotes === 1 ? "rating" : "ratings"}
+                    </p>
+                    <div className="w-full max-w-sm space-y-1.5 mt-1">
+                      {[...ratingLevels].reverse().map((r) => (
+                        <div key={r.id} className="flex items-center gap-2">
+                          <span className="text-[11px] text-muted w-6 shrink-0 tabular-nums">
+                            {r.level}★
+                          </span>
+                          <div className="flex-1 h-2 rounded-full bg-surface-light overflow-hidden">
+                            <div
+                              className="h-full rounded-full bg-amber-400 transition-all duration-500"
+                              style={{ width: `${(r.votes / maxLevelVotes) * 100}%` }}
+                            />
+                          </div>
+                          <span className="text-[11px] text-muted w-6 text-right tabular-nums shrink-0">
+                            {r.votes}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-sm text-muted">No ratings yet. Be the first to rate!</p>
+                )}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-2.5 mb-5">
+            {poll.options.map((opt) => (
+              <VoteOption
+                key={opt._id}
+                option={opt}
+                percentage={totalVotes > 0 ? Number(((opt.votesCount / totalVotes) * 100).toFixed(1)) : 0}
+                isSelected={selected.includes(opt._id) || (hasVoted && data.data.userVote.selectedOptions.includes(opt._id))}
+                hasVoted={hasVoted}
+                onSelect={handleSelect}
+                onImageClick={() => setLightboxIndex(poll.options.findIndex((o) => o._id === opt._id))}
+              />
+            ))}
+          </div>
+        )}
 
         {expired && (
           <p className="text-center text-sm text-amber-500 font-medium mb-2">
