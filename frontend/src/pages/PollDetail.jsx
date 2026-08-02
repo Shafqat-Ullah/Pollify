@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Heart, Bookmark, Share2, Flag, Send, MessageCircle } from "lucide-react";
+import { Heart, Bookmark, Flag, Send, MessageCircle } from "lucide-react";
 import toast from "react-hot-toast";
 import { pollService } from "../services/pollService";
 import { useAuth } from "../contexts/AuthContext";
+import { useRealtimePoll } from "../hooks/useRealtimePoll";
 import VoteOption from "../components/poll/VoteOption";
+import ShareMenu from "../components/poll/ShareMenu";
+import Lightbox from "../components/ui/Lightbox";
 import Button from "../components/ui/Button";
 
 export default function PollDetail() {
@@ -15,11 +18,14 @@ export default function PollDetail() {
   const [selected, setSelected] = useState([]);
   const [comment, setComment] = useState("");
   const [voting, setVoting] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["poll", id],
     queryFn: () => pollService.get(id),
   });
+
+  useRealtimePoll(id);
 
   const { data: commentsData } = useQuery({
     queryKey: ["comments", id],
@@ -49,9 +55,11 @@ export default function PollDetail() {
   const poll = data.data.poll;
   const hasVoted = !!data.data.userVote;
   const totalVotes = poll.totalVotes;
+  const expired = poll.expiresAt && new Date(poll.expiresAt) < new Date();
+  const imageOptions = poll.options.map((o) => ({ url: o.image?.url, text: o.text })).filter((o) => o.url);
 
   const handleSelect = (optionId) => {
-    if (hasVoted) return;
+    if (hasVoted || expired) return;
     if (poll.type === "multiple") {
       setSelected((prev) => (prev.includes(optionId) ? prev.filter((i) => i !== optionId) : [...prev, optionId]));
     } else {
@@ -60,6 +68,7 @@ export default function PollDetail() {
   };
 
   const submitVote = async () => {
+    if (expired) return toast.error("This poll has ended.");
     if (selected.length === 0) return toast.error("Select an option first.");
     setVoting(true);
     try {
@@ -124,11 +133,18 @@ export default function PollDetail() {
               isSelected={selected.includes(opt._id) || (hasVoted && data.data.userVote.selectedOptions.includes(opt._id))}
               hasVoted={hasVoted}
               onSelect={handleSelect}
+              onImageClick={() => setLightboxIndex(poll.options.findIndex((o) => o._id === opt._id))}
             />
           ))}
         </div>
 
-        {!hasVoted && poll.status === "published" && (
+        {expired && (
+          <p className="text-center text-sm text-amber-500 font-medium mb-2">
+            This poll has ended.
+          </p>
+        )}
+
+        {!hasVoted && poll.status === "published" && !expired && (
           <Button onClick={submitVote} loading={voting} className="w-full mb-2">
             Cast vote · {totalVotes} {totalVotes === 1 ? "vote" : "votes"}
           </Button>
@@ -153,15 +169,7 @@ export default function PollDetail() {
           <button onClick={handleBookmark} className="flex items-center gap-1.5 hover:text-primary">
             <Bookmark className="w-4 h-4" />
           </button>
-          <button
-            onClick={() => {
-              navigator.clipboard.writeText(window.location.href);
-              toast.success("Link copied.");
-            }}
-            className="flex items-center gap-1.5 hover:text-primary"
-          >
-            <Share2 className="w-4 h-4" />
-          </button>
+          <ShareMenu url={window.location.href} title={poll.title} />
           <button
             onClick={() => user ? pollService.report(id, "other").then(() => toast.success("Reported.")) : toast.error("Log in to report.")}
             className="flex items-center gap-1.5 hover:text-red-400 ml-auto"
@@ -170,6 +178,10 @@ export default function PollDetail() {
           </button>
         </div>
       </div>
+
+      {lightboxIndex !== null && (
+        <Lightbox images={imageOptions} index={lightboxIndex} onClose={setLightboxIndex} />
+      )}
 
       <div className="glass-card p-6" id="comments">
         <h2 className="font-display font-semibold mb-4">Comments ({commentsData?.data.comments.length || 0})</h2>

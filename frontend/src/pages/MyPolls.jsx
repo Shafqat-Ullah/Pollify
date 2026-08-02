@@ -13,7 +13,7 @@ export default function MyPolls() {
 
   const { data, isLoading } = useQuery({
     queryKey: ["my-polls"],
-    queryFn: () => pollService.list({ author: user._id, limit: 50, sort: "newest" }),
+    queryFn: () => pollService.list({ author: user._id, mine: 1, limit: 50, sort: "newest" }),
   });
 
   const polls = data?.data.polls || [];
@@ -53,9 +53,10 @@ export default function MyPolls() {
   const handleClose = async (id) => {
     try {
       const poll = polls.find((p) => p._id === id);
-      const target = poll?.status === "closed" ? "published" : "closed";
+      const target =
+        poll?.status === "closed" || poll?.status === "draft" ? "published" : "closed";
       await pollService.setStatus(id, target);
-      toast.success(target === "closed" ? "Poll closed." : "Poll reopened.");
+      toast.success(target === "closed" ? "Poll closed." : "Poll published.");
       refresh();
     } catch (err) {
       toast.error(err.response?.data?.message || "Could not change poll status.");

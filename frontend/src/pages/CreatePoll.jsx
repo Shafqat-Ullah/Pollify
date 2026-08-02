@@ -31,6 +31,7 @@ export default function CreatePoll() {
   const [type, setType] = useState("yesno");
   const [options, setOptions] = useState(["", ""]);
   const [images, setImages] = useState([]);
+  const [expiresAt, setExpiresAt] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -50,7 +51,7 @@ export default function CreatePoll() {
     return () => imagePreviews.forEach((url) => URL.revokeObjectURL(url));
   }, [imagePreviews]);
 
-  const submit = async (e) => {
+  const submit = async (e, status) => {
     e.preventDefault();
     setError("");
     if (!question.trim()) return setError("Please write a question first.");
@@ -60,14 +61,22 @@ export default function CreatePoll() {
     }
     if (type === "image" && images.length < 2) return setError("Please add at least 2 images.");
 
+    let parsedExpiry = null;
+    if (expiresAt) {
+      parsedExpiry = new Date(expiresAt);
+      if (isNaN(parsedExpiry.getTime())) return setError("Please enter a valid expiry date.");
+      if (parsedExpiry <= new Date()) return setError("Expiry must be in the future.");
+    }
+
     setSubmitting(true);
     try {
       const payload = {
         title: question.trim(),
         type,
         category,
-        status: "published",
+        status,
       };
+      if (parsedExpiry) payload.expiresAt = parsedExpiry.toISOString();
       if (type === "single") payload.options = options.map((o) => o.trim()).filter(Boolean);
       if (type === "image") {
         payload.options = await Promise.all(
@@ -75,7 +84,7 @@ export default function CreatePoll() {
         );
       }
       await pollService.create(payload);
-      toast.success("Poll published!");
+      toast.success(status === "draft" ? "Poll saved as draft." : "Poll published!");
       navigate("/my-polls");
     } catch (err) {
       toast.error(err.response?.data?.message || "Could not create poll.");
@@ -212,10 +221,35 @@ export default function CreatePoll() {
           </div>
         )}
 
-        <Button type="submit" loading={submitting} className="w-full">
-          {submitting ? "Creating..." : "Publish poll"}
-        </Button>
-      </form>
+          <div>
+            <label className="block text-sm font-medium text-muted mb-1.5">Expires at (optional)</label>
+            <input
+              type="datetime-local"
+              value={expiresAt}
+              onChange={(e) => setExpiresAt(e.target.value)}
+              min={new Date().toISOString().slice(0, 16)}
+              className="input-field"
+            />
+            <p className="text-xs text-muted mt-1.5">
+              Voting automatically stops after this time. Leave empty for no expiry.
+            </p>
+          </div>
+
+          <div className="flex gap-2">
+            <Button type="submit" loading={submitting} className="flex-1">
+              {submitting ? "Saving..." : "Publish poll"}
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={(e) => submit(e, "draft")}
+              disabled={submitting}
+              className="flex-1"
+            >
+              {submitting ? "Saving..." : "Save as draft"}
+            </Button>
+          </div>
+        </form>
     </div>
   );
 }

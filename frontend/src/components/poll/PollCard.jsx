@@ -4,7 +4,6 @@ import {
   BarChart3,
   MessageCircle,
   Bookmark,
-  Share2,
   Loader2,
   Send,
   Lock,
@@ -18,6 +17,8 @@ import toast from "react-hot-toast";
 import { CATEGORIES } from "../../constants";
 import { pollService } from "../../services/pollService";
 import { useAuth } from "../../contexts/AuthContext";
+import ShareMenu from "./ShareMenu";
+import Lightbox from "../ui/Lightbox";
 
 const COLORS = ["emerald", "sky", "violet", "amber", "rose", "teal"];
 
@@ -86,15 +87,18 @@ export default function PollCard({
   const [comments, setComments] = useState(null);
   const [commentText, setCommentText] = useState("");
   const [commentBusy, setCommentBusy] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(null);
 
   const closed = poll.status === "closed" || (poll.expiresAt && new Date(poll.expiresAt) < new Date());
+  const draft = poll.status === "draft";
   const total = poll.totalVotes || 0;
   const myVote = Array.isArray(poll.myVote) ? poll.myVote.map((id) => String(id)) : null;
   const voted = !!myVote && myVote.length > 0;
   const canUndo = voted && !!onUnvote && !closed;
-  const interactive = !voted && !!onVote && !closed;
+  const interactive = !voted && !!onVote && !closed && !draft;
 
   const options = [...(poll.options || [])].sort((a, b) => (b.votesCount || 0) - (a.votesCount || 0));
+  const imageOptions = options.map((o) => ({ url: o.image?.url, text: o.text })).filter((o) => o.url);
 
   const startEdit = () => {
     setEditTitle(poll.title || "");
@@ -119,6 +123,11 @@ export default function PollCard({
     } else if (interactive) {
       onVote(poll._id, [opt._id]);
     }
+  };
+
+  const openImage = (index) => {
+    if (imageOptions.length === 0) return;
+    setLightboxIndex(index);
   };
 
   const toggleComments = async () => {
@@ -147,16 +156,6 @@ export default function PollCard({
       toast.error("Could not post comment. Please log in.");
     } finally {
       setCommentBusy(false);
-    }
-  };
-
-  const share = async () => {
-    const url = `${window.location.origin}/polls/${poll._id}`;
-    try {
-      await navigator.clipboard.writeText(url);
-      toast.success("Link copied!");
-    } catch {
-      toast.error("Could not copy link.");
     }
   };
 
@@ -210,6 +209,12 @@ export default function PollCard({
             </div>
           </div>
 
+          {draft && (
+            <span className="inline-flex items-center gap-1 rounded-lg bg-amber-500/10 border border-amber-500/15 text-amber-500 px-2 py-0.5 text-[10px] font-semibold shrink-0">
+              <Pencil size={9} /> Draft
+            </span>
+          )}
+
           {closed && (
             <span className="inline-flex items-center gap-1 rounded-lg bg-rose-500/10 border border-rose-500/15 text-rose-500 px-2 py-0.5 text-[10px] font-semibold shrink-0">
               <Lock size={9} /> Closed
@@ -243,7 +248,8 @@ export default function PollCard({
                 onClick={() => onClose(poll._id)}
                 className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium text-zinc-400 hover:text-amber-400 hover:bg-zinc-800 transition-colors"
               >
-                {closed ? <RotateCcw size={11} /> : <Lock size={11} />} {closed ? "Reopen" : "Close"}
+                {draft ? <CheckCircle size={11} /> : closed ? <RotateCcw size={11} /> : <Lock size={11} />}{" "}
+                {draft ? "Publish" : closed ? "Reopen" : "Close"}
               </button>
             )}
             {onDelete && (
@@ -307,7 +313,7 @@ export default function PollCard({
         {/* Vote bars */}
         {options.length > 0 && (
           <div className="space-y-2 mb-1">
-            {options.map((o) => {
+            {options.map((o, oi) => {
               const pct = total > 0 ? Math.round(((o.votesCount || 0) / total) * 100) : 0;
               const mine = voted && myVote.includes(String(o._id));
               const clickable = (interactive && !voted) || (mine && canUndo);
@@ -331,7 +337,11 @@ export default function PollCard({
                         <img
                           src={o.image.url}
                           alt={o.text || "Image option"}
-                          className="w-10 h-10 rounded-lg object-cover shrink-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openImage(oi);
+                          }}
+                          className="w-10 h-10 rounded-lg object-cover shrink-0 cursor-zoom-in hover:opacity-90 transition-opacity"
                         />
                       ) : null}
                       <span className={`truncate ${mine ? "text-emerald-300 font-semibold" : ""}`}>
@@ -362,12 +372,11 @@ export default function PollCard({
           >
             <MessageCircle size={14} /> {poll.commentsCount ?? 0}
           </button>
-          <button
-            onClick={share}
-            className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-300 hover:bg-zinc-800 transition-colors"
-          >
-            <Share2 size={14} /> Share
-          </button>
+          <ShareMenu
+            url={`${window.location.origin}/polls/${poll._id}`}
+            title={poll.title}
+            compact
+          />
           <button
             onClick={toggleSave}
             className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${saved ? "text-amber-400" : "text-zinc-600 hover:text-zinc-300 hover:bg-zinc-800"}`}
@@ -433,6 +442,10 @@ export default function PollCard({
           </div>
         )}
       </div>
+
+      {lightboxIndex !== null && (
+        <Lightbox images={imageOptions} index={lightboxIndex} onClose={setLightboxIndex} />
+      )}
     </motion.div>
   );
 }

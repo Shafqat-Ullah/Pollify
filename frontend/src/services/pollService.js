@@ -11,6 +11,7 @@ export const pollService = {
   vote: (id, selectedOptions) => api.post(`/polls/${id}/vote`, { selectedOptions }).then((r) => r.data),
   unvote: (id) => api.post(`/polls/${id}/unvote`).then((r) => r.data),
   results: (id) => api.get(`/polls/${id}/results`).then((r) => r.data),
+  voteTimeline: (id) => api.get(`/polls/${id}/votes/timeline`).then((r) => r.data),
   like: (id) => api.post(`/polls/${id}/like`).then((r) => r.data),
   bookmark: (id) => api.post(`/polls/${id}/bookmark`).then((r) => r.data),
   getComments: (id) => api.get(`/polls/${id}/comments`).then((r) => r.data),

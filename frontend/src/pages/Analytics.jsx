@@ -1,8 +1,10 @@
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { BarChart3, ArrowLeft, Lock, Vote, ListChecks } from "lucide-react";
+import { BarChart3, ArrowLeft, Lock, Vote, ListChecks, TrendingUp } from "lucide-react";
+import { ResponsiveContainer, BarChart as ReBarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { pollService } from "../services/pollService";
 import { useAuth } from "../contexts/AuthContext";
+import { useRealtimePoll } from "../hooks/useRealtimePoll";
 
 const BAR_COLORS = ["bg-emerald-500", "bg-sky-500", "bg-violet-500", "bg-amber-500", "bg-rose-500", "bg-teal-500"];
 
@@ -14,6 +16,16 @@ export default function Analytics() {
     queryKey: ["poll-analytics", id],
     queryFn: () => pollService.get(id),
   });
+
+  useRealtimePoll(id);
+
+  const { data: timelineData } = useQuery({
+    queryKey: ["poll-votes-timeline", id],
+    queryFn: () => pollService.voteTimeline(id),
+  });
+
+  const series = timelineData?.data?.series || [];
+  const maxDayVotes = Math.max(1, ...series.map((s) => s.count));
 
   if (isLoading) {
     return (
@@ -85,6 +97,48 @@ export default function Analytics() {
             <p className="text-[11px] text-zinc-500 uppercase tracking-wide">Options</p>
           </div>
         </div>
+      </div>
+
+      <div className="glass-card p-6 mb-4">
+        <h2 className="font-display font-semibold text-lg mb-4 flex items-center gap-2">
+          <TrendingUp size={16} className="text-emerald-400" /> Votes · last 7 days
+        </h2>
+        {series.every((s) => s.count === 0) ? (
+          <p className="text-sm text-zinc-500">No votes in the last 7 days.</p>
+        ) : (
+          <div className="h-48 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <ReBarChart data={series} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
+                <XAxis
+                  dataKey="label"
+                  tick={{ fill: "#a1a1aa", fontSize: 11 }}
+                  axisLine={{ stroke: "#3f3f46" }}
+                  tickLine={false}
+                />
+                <YAxis
+                  allowDecimals={false}
+                  domain={[0, maxDayVotes]}
+                  tick={{ fill: "#a1a1aa", fontSize: 11 }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <Tooltip
+                  cursor={{ fill: "rgba(255,255,255,0.04)" }}
+                  contentStyle={{
+                    background: "#18181b",
+                    border: "1px solid #3f3f46",
+                    borderRadius: 12,
+                    fontSize: 12,
+                    color: "#e4e4e7",
+                  }}
+                  labelFormatter={(_, payload) => payload?.[0]?.payload?.date || ""}
+                />
+                <Bar dataKey="count" name="Votes" fill="#10b981" radius={[6, 6, 0, 0]} />
+              </ReBarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </div>
 
       <div className="glass-card p-6">

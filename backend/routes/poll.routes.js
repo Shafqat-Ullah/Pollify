@@ -7,6 +7,7 @@ import {
   setPollStatus,
   listPolls,
   getPollTypeStats,
+  getPollVoteTimeline,
 } from "../controllers/poll.controller.js";
 import { castVote, getPollResults, removeVote } from "../controllers/vote.controller.js";
 import {
@@ -29,6 +30,7 @@ router.get("/", optionalAuth, listPolls);
 router.post("/", protect, createPollRules, validate, createPoll);
 
 router.get("/:id", optionalAuth, getPoll);
+router.get("/:id/votes/timeline", getPollVoteTimeline);
 router.put("/:id", protect, updatePoll);
 router.delete("/:id", protect, deletePoll);
 router.patch("/:id/status", protect, setPollStatus);

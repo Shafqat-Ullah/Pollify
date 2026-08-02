@@ -165,6 +165,39 @@ export const setPollStatus = asyncHandler(async (req, res) => {
   res.status(200).json({ success: true, data: { poll } });
 });
 
+// @route GET /api/polls/:id/votes/timeline — votes per day for the last 7 days
+export const getPollVoteTimeline = asyncHandler(async (req, res) => {
+  const poll = await Poll.findById(req.params.id);
+  if (!poll) throw new ApiError(404, "Poll not found.");
+
+  const days = 7;
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+  const grouped = await Vote.aggregate([
+    { $match: { poll: poll._id, createdAt: { $gte: since } } },
+    {
+      $group: {
+        _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+        count: { $sum: 1 },
+      },
+    },
+    { $sort: { _id: 1 } },
+  ]);
+
+  const map = new Map(grouped.map((g) => [g._id, g.count]));
+  const series = Array.from({ length: days }, (_, i) => {
+    const d = new Date(Date.now() - (days - 1 - i) * 24 * 60 * 60 * 1000);
+    const key = d.toISOString().slice(0, 10);
+    return {
+      date: key,
+      label: d.toLocaleDateString(undefined, { weekday: "short" }),
+      count: map.get(key) || 0,
+    };
+  });
+
+  res.status(200).json({ success: true, data: { pollId: poll._id, series } });
+});
+
 // @route GET /api/polls/trending — counts of published polls grouped by type
 export const getPollTypeStats = asyncHandler(async (req, res) => {
   const stats = await Poll.aggregate([
@@ -181,13 +214,17 @@ export const getPollTypeStats = asyncHandler(async (req, res) => {
 
 // @route GET /api/polls
 export const listPolls = asyncHandler(async (req, res) => {
-  const { search, category, tag, type, sort = "newest", page = 1, limit = 12, author, feed } = req.query;
+  const { search, category, tag, type, sort = "newest", page = 1, limit = 12, author, feed, mine } = req.query;
 
   const query = { status: "published", visibility: "public" };
   if (category) query.category = category;
   if (tag) query.tags = tag;
   if (type) query.type = type;
   if (author) query.author = author;
+  if (mine === "1" && req.user && author && String(author) === String(req.user._id)) {
+    delete query.status;
+    delete query.visibility;
+  }
   if (feed === "following") {
     if (!req.user) throw new ApiError(401, "Please log in to view your following feed.");
     query.author = { $in: req.user.following };

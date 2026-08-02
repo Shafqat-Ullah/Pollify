@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 import clsx from "clsx";
 
-export default function VoteOption({ option, percentage, isSelected, hasVoted, onSelect, disabled }) {
+export default function VoteOption({ option, percentage, isSelected, hasVoted, onSelect, onImageClick, disabled }) {
   return (
     <button
       onClick={() => onSelect(option._id)}
@@ -32,7 +32,11 @@ export default function VoteOption({ option, percentage, isSelected, hasVoted, o
             <img
               src={option.image.url}
               alt={option.text || "Image option"}
-              className="w-14 h-14 rounded-lg object-cover shrink-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                onImageClick?.();
+              }}
+              className="w-14 h-14 rounded-lg object-cover shrink-0 cursor-zoom-in hover:opacity-90 transition-opacity"
             />
             {option.text && <span className="text-sm text-text">{option.text}</span>}
           </div>

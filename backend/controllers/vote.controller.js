@@ -4,6 +4,17 @@ import Vote from "../models/Vote.js";
 import Notification from "../models/Notification.js";
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import { getIO } from "../socket.js";
+
+const emitPollUpdate = (poll) => {
+  const io = getIO();
+  if (!io) return;
+  io.to(`poll:${String(poll._id)}`).emit("poll:update", {
+    pollId: String(poll._id),
+    totalVotes: poll.totalVotes,
+    options: poll.options.map((o) => ({ _id: o._id, votesCount: o.votesCount })),
+  });
+};
 
 // @route POST /api/polls/:id/vote
 export const castVote = asyncHandler(async (req, res) => {
@@ -54,6 +65,8 @@ export const castVote = asyncHandler(async (req, res) => {
     });
   }
 
+  emitPollUpdate(poll);
+
   res.status(201).json({ success: true, data: { vote, poll } });
 });
 
@@ -74,6 +87,8 @@ export const removeVote = asyncHandler(async (req, res) => {
   poll.totalVotes = Math.max(0, poll.totalVotes - 1);
 
   await Promise.all([vote.deleteOne(), poll.save()]);
+
+  emitPollUpdate(poll);
 
   res.status(200).json({ success: true, data: { poll } });
 });
