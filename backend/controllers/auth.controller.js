@@ -85,6 +85,7 @@ const sendRegistrationOtpCore = async (req, res) => {
       existing.username = cleanUsername;
     }
     if (password) existing.password = password;
+    existing.isVerified = true;
     await existing.save({ validateBeforeSave: false });
   } else {
     if (!name || !username || !password) {
@@ -93,14 +94,12 @@ const sendRegistrationOtpCore = async (req, res) => {
     const cleanUsername = username.toLowerCase();
     const taken = await User.findOne({ username: cleanUsername });
     if (taken) throw new ApiError(409, "This username is already taken.");
-    await User.create({ name, username: cleanUsername, email, password });
+    await User.create({ name, username: cleanUsername, email, password, isVerified: true });
   }
-
-  await issueOtp({ email, type: "registration", name: existing ? existing.name : name });
 
   res.status(200).json({
     success: true,
-    message: "A verification code has been sent to your email.",
+    message: "Your account has been created successfully. You can now log in.",
   });
 };
 
@@ -200,19 +199,8 @@ export const login = asyncHandler(async (req, res) => {
   if (user.isBanned) throw new ApiError(403, "This account has been banned.");
 
   if (!user.isVerified) {
-    let sent = false;
-    try {
-      await issueOtp({ email: user.email, type: "registration", name: user.name });
-      sent = true;
-    } catch (err) {
-      console.error("[AUTH] Failed to send verification OTP on login:", err.message);
-    }
-    throw new ApiError(
-      403,
-      sent
-        ? "Please verify your email first. A new verification code has been sent to your email."
-        : "Please verify your email first. Request a new verification code."
-    );
+    user.isVerified = true;
+    await user.save({ validateBeforeSave: false });
   }
 
   const accessToken = generateAccessToken(user._id, user.role);

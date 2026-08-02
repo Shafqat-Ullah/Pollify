@@ -14,11 +14,13 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const successMessage = location.state?.verified
-    ? "Email verified! You can now sign in."
-    : location.state?.passwordUpdated
-      ? "Password updated! Sign in with your new password."
-      : null;
+  const successMessage = location.state?.created
+    ? "Account created! Sign in to continue."
+    : location.state?.verified
+      ? "Email verified! You can now sign in."
+      : location.state?.passwordUpdated
+        ? "Password updated! Sign in with your new password."
+        : null;
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));

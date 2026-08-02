@@ -49,7 +49,8 @@ export default function Register() {
     setLoading(true);
     try {
       await authService.register(values);
-      navigate("/verify-otp", { state: values });
+      toast.success("Account created! You can now sign in.");
+      navigate("/login", { state: { created: true } });
     } catch (err) {
       const msg = err.response?.data?.message || "Registration failed.";
       toast.error(msg);
@@ -250,7 +251,7 @@ export default function Register() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
-                  Sending code...
+                  Creating account...
                 </span>
               ) : (
                 <span className="inline-flex items-center justify-center gap-2">
