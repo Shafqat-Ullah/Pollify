@@ -10,7 +10,6 @@ import userRoutes from "./routes/user.routes.js";
 import pollRoutes from "./routes/poll.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
-import smtpDiagnoseRoutes from "./routes/smtp-diagnose.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import errorHandler, { notFound } from "./middlewares/error.middleware.js";
 import { globalLimiter } from "./middlewares/rateLimit.middleware.js";
@@ -34,7 +33,6 @@ app.use(morgan(process.env.NODE_ENV === "development" ? "dev" : "combined"));
 app.use(globalLimiter);
 
 app.get("/api/health", (req, res) => res.status(200).json({ success: true, message: "Pollify API is running." }));
-app.use("/api/health/smtp-diagnose", smtpDiagnoseRoutes);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);

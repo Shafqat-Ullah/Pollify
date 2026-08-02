@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import dns from "node:dns";
+import https from "node:https";
 
 // Render's network has no IPv6 route. Force IPv4-first DNS resolution so SMTP
 // hosts (e.g. smtp.gmail.com) connect via their A records instead of failing
@@ -24,6 +25,60 @@ const hasSmtpConfig = () => {
   return Boolean(
     user && pass && user !== "your_email@gmail.com" && pass !== "your_app_password"
   );
+};
+
+// Brevo (formerly Sendinblue) HTTP API — the reliable path from Render, whose
+// network cannot reach Gmail SMTP (Google egress times out entirely).
+const hasBrevoConfig = () => {
+  const key = process.env.BREVO_API_KEY;
+  return Boolean(key && key !== "your_brevo_api_key");
+};
+
+const sendBrevoEmail = async (to, subject, html) => {
+  const senderEmail = process.env.BREVO_SENDER_EMAIL || process.env.SMTP_USER || "no-reply@pollify.app";
+  const senderName = process.env.BREVO_SENDER_NAME || "Pollify";
+  const body = JSON.stringify({
+    sender: { name: senderName, email: senderEmail },
+    to: [{ email: to }],
+    subject,
+    htmlContent: html,
+  });
+
+  return new Promise((resolve) => {
+    const req = https.request(
+      {
+        hostname: "api.brevo.com",
+        path: "/v3/smtp/email",
+        method: "POST",
+        timeout: 20000,
+        headers: {
+          "api-key": process.env.BREVO_API_KEY,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          "Content-Length": Buffer.byteLength(body),
+        },
+      },
+      (res) => {
+        let data = "";
+        res.on("data", (chunk) => (data += chunk));
+        res.on("end", () => {
+          if (res.statusCode >= 200 && res.statusCode < 300) {
+            console.log(`[EMAIL] Brevo sent "${subject}" to ${to} (${res.statusCode})`);
+            return resolve({ ok: true, emailed: true });
+          }
+          console.error(`[EMAIL] Brevo API ${res.statusCode}: ${data}`);
+          resolve({ ok: false, emailed: false });
+        });
+      }
+    );
+    req.on("timeout", () => req.destroy());
+    req.on("error", (err) => {
+      console.error(`[EMAIL] Brevo send failed: ${err.message}`);
+      resolve({ ok: false, emailed: false });
+    });
+    req.write(body);
+    req.end();
+  });
 };
 
 // Creates a transporter lazily and never caches a broken one. If the SMTP
@@ -68,6 +123,11 @@ const getTransporter = async () => {
 const sendMail = async (to, subject, html) => {
   // Test/CI mode: skip real delivery while still logging the OTP.
   if (process.env.EMAIL_DISABLE === "true") return { ok: true, emailed: false };
+
+  // Brevo is preferred when configured (works from any network, including Render).
+  if (hasBrevoConfig()) {
+    return sendBrevoEmail(to, subject, html);
+  }
 
   const transport = await getTransporter();
   if (!transport) {
