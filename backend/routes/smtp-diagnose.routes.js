@@ -24,6 +24,12 @@ const tcpConnect = (host, port, timeoutMs = 8000) =>
     socket.connect(port, host);
   });
 
+const withTimeout = (promise, ms, label) =>
+  Promise.race([
+    promise,
+    new Promise((resolve) => setTimeout(() => resolve({ timedOut: true, label }), ms)),
+  ]);
+
 const httpsGet = (url, timeoutMs = 8000) =>
   new Promise((resolve) => {
     const req = https.get(url, { timeout: timeoutMs }, (res) => {
@@ -43,13 +49,13 @@ const lookup = (family) =>
 
 router.get("/", async (_req, res) => {
   const [a, aaaa, v4, v4Alt, v465, http, ipify] = await Promise.all([
-    lookup(4),
-    lookup(6),
-    tcpConnect("smtp.gmail.com", 587),
-    tcpConnect("64.233.184.108", 587),
-    tcpConnect("smtp.gmail.com", 465),
-    httpsGet("https://smtp.gmail.com/"),
-    httpsGet("https://api.ipify.org"),
+    withTimeout(lookup(4), 6000, "lookup4"),
+    withTimeout(lookup(6), 6000, "lookup6"),
+    withTimeout(tcpConnect("smtp.gmail.com", 587), 9000, "587"),
+    withTimeout(tcpConnect("64.233.184.108", 587), 9000, "587-hardip"),
+    withTimeout(tcpConnect("smtp.gmail.com", 465), 9000, "465"),
+    withTimeout(httpsGet("https://smtp.gmail.com/"), 9000, "https-smtp"),
+    withTimeout(httpsGet("https://api.ipify.org"), 9000, "https-ipify"),
   ]);
   res.status(200).json({
     success: true,
