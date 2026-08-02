@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Heart, Bookmark, Flag, Send, MessageCircle } from "lucide-react";
 import toast from "react-hot-toast";
 import { pollService } from "../services/pollService";
+import { invalidatePollQueries } from "../services/queryUtils";
 import { useAuth } from "../contexts/AuthContext";
 import { useRealtimePoll } from "../hooks/useRealtimePoll";
 import VoteOption from "../components/poll/VoteOption";
@@ -85,7 +86,7 @@ export default function PollDetail() {
     try {
       await pollService.vote(id, [r.id]);
       toast.success(`Rated ${level} star${level > 1 ? "s" : ""}!`);
-      queryClient.invalidateQueries({ queryKey: ["poll", id] });
+      invalidatePollQueries(queryClient);
     } catch (err) {
       toast.error(err.response?.data?.message || "Could not cast rating.");
     } finally {
@@ -109,7 +110,7 @@ export default function PollDetail() {
     try {
       await pollService.vote(id, selected);
       toast.success("Vote cast!");
-      queryClient.invalidateQueries({ queryKey: ["poll", id] });
+      invalidatePollQueries(queryClient);
     } catch (err) {
       toast.error(err.response?.data?.message || "Could not cast vote.");
     } finally {
@@ -120,13 +121,14 @@ export default function PollDetail() {
   const handleLike = async () => {
     if (!user) return toast.error("Log in to like polls.");
     await pollService.like(id);
-    queryClient.invalidateQueries({ queryKey: ["poll", id] });
+    invalidatePollQueries(queryClient);
   };
 
   const handleBookmark = async () => {
     if (!user) return toast.error("Log in to bookmark polls.");
     await pollService.bookmark(id);
     toast.success("Bookmark updated.");
+    invalidatePollQueries(queryClient);
   };
 
   const submitComment = async () => {
@@ -135,6 +137,7 @@ export default function PollDetail() {
       await pollService.addComment(id, comment.trim());
       setComment("");
       queryClient.invalidateQueries({ queryKey: ["comments", id] });
+      invalidatePollQueries(queryClient);
     } catch (err) {
       toast.error(err.response?.data?.message || "Could not post comment.");
     }

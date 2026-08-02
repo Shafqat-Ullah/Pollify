@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   BarChart3,
   MessageCircle,
@@ -16,6 +17,7 @@ import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import { CATEGORIES } from "../../constants";
 import { pollService } from "../../services/pollService";
+import { invalidatePollQueries } from "../../services/queryUtils";
 import { useAuth } from "../../contexts/AuthContext";
 import ShareMenu from "./ShareMenu";
 import Lightbox from "../ui/Lightbox";
@@ -77,6 +79,7 @@ export default function PollCard({
   const tagColor = TAG_COLORS[color] || TAG_COLORS.emerald;
 
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState("");
@@ -142,6 +145,7 @@ export default function PollCard({
         myVote: r.id,
       });
       toast.success(`Rated ${level} star${level > 1 ? "s" : ""}!`);
+      invalidatePollQueries(queryClient);
     } catch (err) {
       toast.error(err.response?.data?.message || "Could not cast rating.");
     } finally {
@@ -160,6 +164,7 @@ export default function PollCard({
       await pollService.unvote(poll._id);
       setLocalVote(null);
       toast.success("Rating removed.");
+      invalidatePollQueries(queryClient);
     } catch (err) {
       toast.error(err.response?.data?.message || "Could not remove rating.");
     } finally {
@@ -219,6 +224,7 @@ export default function PollCard({
       const res = await pollService.getComments(poll._id);
       setComments(res.data.comments || []);
       toast.success("Comment posted.");
+      invalidatePollQueries(queryClient);
     } catch {
       toast.error("Could not post comment. Please log in.");
     } finally {
@@ -234,6 +240,7 @@ export default function PollCard({
       const res = await pollService.bookmark(poll._id);
       setSaved(!!res.data.bookmarked);
       toast.success(res.data.bookmarked ? "Poll saved." : "Poll removed from saved.");
+      invalidatePollQueries(queryClient);
     } catch {
       setSaved(prev);
       toast.error("Could not save poll.");

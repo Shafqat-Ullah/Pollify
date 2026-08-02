@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PenLine } from "lucide-react";
 import toast from "react-hot-toast";
 import { pollService } from "../services/pollService";
+import { invalidatePollQueries } from "../services/queryUtils";
 import { useAuth } from "../contexts/AuthContext";
 import PollCard from "../components/poll/PollCard";
 import { PollCardSkeleton, EmptyState } from "../components/ui/States";
@@ -18,7 +19,7 @@ export default function MyPolls() {
 
   const polls = data?.data.polls || [];
 
-  const refresh = () => queryClient.invalidateQueries({ queryKey: ["my-polls"] });
+  const refresh = () => invalidatePollQueries(queryClient);
 
   const handleVote = async (id, selectedOptions) => {
     try {
