@@ -1,10 +1,10 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import MainLayout from "./layouts/MainLayout";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import AdminRoute from "./routes/AdminRoute";
+import { useAuth } from "./contexts/AuthContext";
 
-import Landing from "./pages/Landing";
 import Explore from "./pages/Explore";
 import PollDetail from "./pages/PollDetail";
 import Analytics from "./pages/Analytics";
@@ -26,6 +26,17 @@ import VerifyForgotOtp from "./pages/auth/VerifyOTP";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 
+function HomeRedirect() {
+  const { user, loading } = useAuth();
+  if (loading)
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  return <Navigate to={user ? "/dashboard" : "/login"} replace />;
+}
+
 export default function App() {
   return (
     <>
@@ -36,7 +47,7 @@ export default function App() {
         }}
       />
       <Routes>
-        <Route path="/" element={<Landing />} />
+        <Route path="/" element={<HomeRedirect />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/verify-otp" element={<VerifyOTP />} />
