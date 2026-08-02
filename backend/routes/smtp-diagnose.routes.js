@@ -40,17 +40,17 @@ const httpsGet = (url, timeoutMs = 8000) =>
     req.on("error", (err) => resolve({ ok: false, error: err.message }));
   });
 
-const lookup = (family) =>
+const lookup = (rrtype) =>
   new Promise((resolve) => {
-    dns.resolve(`smtp.gmail.com`, family, (err, addresses) =>
+    dns.resolve("smtp.gmail.com", rrtype, (err, addresses) =>
       err ? resolve({ error: err.code }) : resolve({ addresses })
     );
   });
 
 router.get("/", async (_req, res) => {
   const [a, aaaa, v4, v4Alt, v465, http, ipify] = await Promise.all([
-    withTimeout(lookup(4), 6000, "lookup4"),
-    withTimeout(lookup(6), 6000, "lookup6"),
+    withTimeout(lookup("A"), 6000, "lookupA"),
+    withTimeout(lookup("AAAA"), 6000, "lookupAAAA"),
     withTimeout(tcpConnect("smtp.gmail.com", 587), 9000, "587"),
     withTimeout(tcpConnect("64.233.184.108", 587), 9000, "587-hardip"),
     withTimeout(tcpConnect("smtp.gmail.com", 465), 9000, "465"),
