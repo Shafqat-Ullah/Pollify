@@ -1,6 +1,7 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { Bell, Search, SquarePen, LogOut, User as UserIcon, LayoutDashboard, Shield, Menu, X, Sun, Moon } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
 
@@ -15,6 +16,14 @@ export default function Navbar() {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const closeAll = () => {
     setMenuOpen(false);
@@ -22,7 +31,11 @@ export default function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-zinc-950/90 backdrop-blur-xl border-b border-zinc-800/60">
+    <header
+      className={`sticky top-0 z-40 bg-zinc-950/90 backdrop-blur-xl border-b border-zinc-800/60 transition-shadow ${
+        scrolled ? "shadow-lg shadow-black/20" : ""
+      }`}
+    >
       <div className="max-w-7xl mx-auto px-4 h-14 flex items-center gap-3">
         <button
           className="lg:hidden p-2 rounded-xl text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 -ml-2"
@@ -36,7 +49,7 @@ export default function Navbar() {
           <img
             src="/favicon.svg"
             alt="Pollify logo"
-            className="w-8 h-8 rounded-lg shadow-lg shadow-emerald-500/30 transition-transform group-hover:scale-105"
+            className="w-8 h-8 rounded-lg shadow-lg shadow-emerald-500/30 transition-transform duration-300 group-hover:scale-110 group-hover:shadow-emerald-500/50"
           />
           <span className="hidden sm:block text-[15px] font-bold text-zinc-100 tracking-tight">
             Pollify
@@ -96,7 +109,13 @@ export default function Navbar() {
                   )}
                 </button>
                 {menuOpen && (
-                  <div className="fixed sm:absolute left-3 right-3 sm:left-auto sm:right-0 top-14 sm:top-full mt-0 sm:mt-2 w-auto sm:w-52 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl shadow-black/40 p-1.5 animate-fade-in">
+                  <motion.div
+                    initial={{ opacity: 0, y: 6, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 4, scale: 0.97 }}
+                    transition={{ duration: 0.16, ease: "easeOut" }}
+                    className="fixed sm:absolute left-3 right-3 sm:left-auto sm:right-0 top-14 sm:top-full mt-0 sm:mt-2 w-auto sm:w-52 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl shadow-black/40 p-1.5 z-50"
+                  >
                     <div className="px-3 py-2 border-b border-zinc-800 mb-1">
                       <p className="text-sm font-semibold text-zinc-100 truncate">{user.name}</p>
                       <p className="text-xs text-zinc-500 truncate">@{user.username}</p>
@@ -122,7 +141,7 @@ export default function Navbar() {
                     >
                       <LogOut className="w-4 h-4" /> Logout
                     </button>
-                  </div>
+                  </motion.div>
                 )}
               </div>
             </>
@@ -136,7 +155,13 @@ export default function Navbar() {
       </div>
 
       {mobileOpen && (
-        <div className="lg:hidden border-t border-zinc-800/60 bg-zinc-950/95 backdrop-blur-xl px-4 py-3 space-y-1 animate-fade-in">
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          exit={{ opacity: 0, height: 0 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+          className="lg:hidden border-t border-zinc-800/60 bg-zinc-950/95 backdrop-blur-xl px-4 py-3 space-y-1 overflow-hidden"
+        >
           <div className="flex items-center gap-1 mb-2">
             <button
               onClick={toggleTheme}
@@ -177,7 +202,7 @@ export default function Navbar() {
           ) : (
             <NavLink to="/explore" className={navItem} onClick={closeAll}>Explore</NavLink>
           )}
-        </div>
+        </motion.div>
       )}
     </header>
   );

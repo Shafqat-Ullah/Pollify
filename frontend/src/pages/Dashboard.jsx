@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { motion } from "framer-motion";
 import {
   Sparkles,
   SquarePen,
@@ -105,19 +106,24 @@ export default function Dashboard() {
       {/* ---- Main feed column ---- */}
       <div className="min-w-0 space-y-4">
         {/* Greeting */}
-        <div className="flex items-center justify-between">
+        <motion.div
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+          className="flex items-center justify-between"
+        >
           <div>
             <h1 className="text-lg font-bold text-zinc-100">
               Hey, <span className="text-emerald-400">{firstName}</span> 👋
             </h1>
             <p className="text-sm text-zinc-600 mt-0.5">What's the community thinking today?</p>
           </div>
-        </div>
+        </motion.div>
 
         {/* Composer card */}
         <Link
           to="/polls/create"
-          className="flex items-center gap-3 bg-zinc-900 border border-zinc-800 rounded-2xl p-3 group"
+          className="group flex items-center gap-3 bg-zinc-900 border border-zinc-800 rounded-2xl p-3 transition-colors hover:border-emerald-500/30 hover:bg-zinc-900/70"
         >
           {user?.avatar?.url ? (
             <img
@@ -133,33 +139,35 @@ export default function Dashboard() {
           <span className="flex-1 rounded-xl bg-zinc-800/50 hover:bg-zinc-800 px-4 py-2.5 text-sm text-zinc-600 group-hover:text-zinc-400 transition-colors text-left">
             Ask the community something…
           </span>
-          <span className="grid place-items-center w-9 h-9 rounded-xl bg-emerald-500 text-white hover:bg-emerald-400 active:scale-95 transition-all shrink-0 shadow-lg shadow-emerald-500/25">
+          <span className="grid place-items-center w-9 h-9 rounded-xl bg-emerald-500 text-white hover:bg-emerald-400 active:scale-95 transition-all shrink-0 shadow-lg shadow-emerald-500/25 group-hover:shadow-emerald-500/40">
             <SquarePen size={16} />
           </span>
         </Link>
 
         {/* Feed tabs */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setTab("all")}
-            className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
-              tab === "all"
-                ? "bg-zinc-800 text-zinc-100 border border-zinc-700"
-                : "text-zinc-600 hover:text-zinc-400"
-            }`}
-          >
-            <Compass size={14} /> Explore
-          </button>
-          <button
-            onClick={() => setTab("following")}
-            className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
-              tab === "following"
-                ? "bg-zinc-800 text-zinc-100 border border-zinc-700"
-                : "text-zinc-600 hover:text-zinc-400"
-            }`}
-          >
-            <UsersRound size={14} /> Following
-          </button>
+        <div className="flex items-center gap-2 p-1 bg-zinc-900/80 border border-zinc-800 rounded-xl w-fit">
+          {[
+            { key: "all", label: "Explore", Icon: Compass },
+            { key: "following", label: "Following", Icon: UsersRound },
+          ].map(({ key, label, Icon }) => (
+            <button
+              key={key}
+              onClick={() => setTab(key)}
+              className={`relative inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors ${
+                tab === key ? "text-zinc-100" : "text-zinc-600 hover:text-zinc-400"
+              }`}
+            >
+              {tab === key && (
+                <motion.span
+                  layoutId="feed-tab-pill"
+                  className="absolute inset-0 rounded-lg bg-zinc-800 border border-zinc-700/70"
+                  transition={{ type: "spring", stiffness: 400, damping: 32 }}
+                />
+              )}
+              <Icon size={14} className="relative z-10" />
+              <span className="relative z-10">{label}</span>
+            </button>
+          ))}
         </div>
 
         {/* Poll-type filter chips */}
@@ -230,7 +238,12 @@ export default function Dashboard() {
       {/* ---- Right rail ---- */}
       <aside className="hidden xl:flex flex-col gap-3">
         {/* Profile card */}
-        <div className="relative bg-zinc-900/80 border border-zinc-800/80 rounded-2xl p-5 overflow-hidden">
+        <motion.div
+          initial={{ opacity: 0, x: 12 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+          className="relative bg-zinc-900/80 border border-zinc-800/80 rounded-2xl p-5 overflow-hidden"
+        >
           <div className="absolute -top-8 left-1/2 -translate-x-1/2 w-44 h-24 bg-emerald-500/15 blur-3xl rounded-full pointer-events-none" />
           <div className="relative flex flex-col items-center text-center">
             <div className="relative">
@@ -277,10 +290,15 @@ export default function Dashboard() {
               View profile <ChevronRight size={13} />
             </Link>
           </div>
-        </div>
+        </motion.div>
 
         {/* Trending poll types */}
-        <div className="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl p-4">
+        <motion.div
+          initial={{ opacity: 0, x: 12 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.35, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
+          className="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl p-4"
+        >
           <h3 className="text-[10px] font-bold text-zinc-700 uppercase tracking-widest mb-4 flex items-center gap-2">
             <TrendingUp size={12} className="text-emerald-500" /> Poll types
           </h3>
@@ -306,7 +324,7 @@ export default function Dashboard() {
               ))}
             </div>
           )}
-        </div>
+        </motion.div>
       </aside>
     </div>
   );

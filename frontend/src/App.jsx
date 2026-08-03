@@ -43,7 +43,17 @@ export default function App() {
       <Toaster
         position="top-center"
         toastOptions={{
-          style: { background: "#18181B", color: "#F4F4F5", border: "1px solid #27272A" },
+          style: {
+            background: "#18181B",
+            color: "#F4F4F5",
+            border: "1px solid #27272A",
+            borderRadius: "12px",
+            fontSize: "14px",
+            padding: "10px 14px",
+            boxShadow: "0 8px 30px rgba(0,0,0,0.45)",
+          },
+          success: { iconTheme: { primary: "#10b981", secondary: "#fff" }, duration: 3000 },
+          error: { iconTheme: { primary: "#f43f5e", secondary: "#fff" }, duration: 4000 },
         }}
       />
       <Routes>

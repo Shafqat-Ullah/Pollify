@@ -259,9 +259,11 @@ export default function PollCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-zinc-900/70 border border-zinc-800/80 rounded-2xl overflow-hidden transition-all hover:border-zinc-700/80 hover:bg-zinc-900"
+      whileHover={{ y: -2 }}
+      transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+      className="bg-zinc-900/70 border border-zinc-800/80 rounded-2xl overflow-hidden transition-colors hover:border-zinc-700/80 hover:bg-zinc-900"
     >
       <div className={`h-px ${barColor}`} />
 

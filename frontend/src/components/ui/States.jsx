@@ -1,25 +1,30 @@
 import { Inbox } from "lucide-react";
+import { motion } from "framer-motion";
 
 export function PollCardSkeleton() {
   return (
-    <div className="bg-zinc-900/70 border border-zinc-800/60 rounded-2xl p-4 animate-pulse">
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-zinc-900/70 border border-zinc-800/60 rounded-2xl p-4"
+    >
       <div className="flex items-center gap-2 mb-3">
-        <div className="w-7 h-7 rounded-full bg-zinc-800 shrink-0" />
-        <div className="h-2.5 w-24 bg-zinc-800 rounded-lg" />
-        <div className="h-2 w-16 bg-zinc-800/60 rounded-lg" />
-        <div className="ml-auto h-5 w-14 bg-zinc-800 rounded-lg" />
+        <div className="w-7 h-7 rounded-full shimmer shrink-0" />
+        <div className="h-2.5 w-24 shimmer rounded-lg" />
+        <div className="h-2 w-16 shimmer rounded-lg" />
+        <div className="ml-auto h-5 w-14 shimmer rounded-lg" />
       </div>
-      <div className="h-4 w-3/4 bg-zinc-800 rounded-lg mb-4" />
+      <div className="h-4 w-3/4 shimmer rounded-lg mb-4" />
       <div className="space-y-2 mb-4">
-        <div className="h-9 bg-zinc-800/60 rounded-xl" />
-        <div className="h-9 bg-zinc-800/60 rounded-xl" />
+        <div className="h-9 shimmer rounded-xl" />
+        <div className="h-9 shimmer rounded-xl" />
       </div>
       <div className="flex gap-2 pt-3 border-t border-zinc-800/60">
-        <div className="h-8 w-20 bg-zinc-800 rounded-lg" />
-        <div className="h-8 w-20 bg-zinc-800 rounded-lg" />
-        <div className="h-8 w-16 bg-zinc-800/60 rounded-lg" />
+        <div className="h-8 w-20 shimmer rounded-lg" />
+        <div className="h-8 w-20 shimmer rounded-lg" />
+        <div className="h-8 w-16 shimmer rounded-lg" />
       </div>
-    </div>
+    </motion.div>
   );
 }
 

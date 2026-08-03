@@ -60,7 +60,7 @@ export default function Register() {
   };
 
   return (
-    <div className="dark min-h-screen lg:grid lg:grid-cols-2">
+    <div className="dark min-h-screen lg:grid lg:grid-cols-2 animate-fade-in">
       <div className="relative flex flex-col justify-center px-12 py-16 bg-zinc-900 overflow-hidden">
         <div className="absolute top-0 left-0 w-96 h-96 rounded-full bg-emerald-500/10 blur-3xl -translate-x-1/2 -translate-y-1/2" />
         <div className="absolute bottom-0 right-0 w-80 h-80 rounded-full bg-teal-500/10 blur-3xl translate-x-1/3 translate-y-1/3" />

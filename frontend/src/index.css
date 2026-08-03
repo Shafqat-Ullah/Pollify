@@ -51,6 +51,20 @@
   body {
     @apply bg-zinc-950 text-zinc-100;
   }
+
+  /* Ambient brand glow behind everything */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(700px 420px at 12% -6%, rgba(16, 185, 129, 0.09), transparent 70%),
+      radial-gradient(760px 520px at 92% 2%, rgba(16, 185, 129, 0.06), transparent 70%),
+      radial-gradient(600px 600px at 50% 110%, rgba(20, 184, 166, 0.05), transparent 70%);
+  }
+
   ::selection {
     background-color: rgba(16, 185, 129, 0.3);
   }
@@ -76,6 +90,58 @@
   input[type="datetime-local"]::-webkit-calendar-picker-indicator {
     filter: invert(0.6);
     cursor: pointer;
+  }
+}
+
+@layer base {
+  @keyframes fade-in-up {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes scale-in {
+    from { opacity: 0; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  @keyframes shimmer-sweep {
+    100% { transform: translateX(100%); }
+  }
+  @keyframes float-slow {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+}
+
+@layer components {
+  .animate-fade-in { animation: fade-in 0.3s ease both; }
+  .animate-fade-in-up { animation: fade-in-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .animate-scale-in { animation: scale-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .animate-float-slow { animation: float-slow 6s ease-in-out infinite; }
+
+  /* Shimmer skeleton (subtle, animated) */
+  .shimmer {
+    position: relative;
+    overflow: hidden;
+    background-color: rgb(var(--color-surface-light) / 0.6);
+  }
+  .shimmer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.07), transparent);
+    animation: shimmer-sweep 1.6s ease-in-out infinite;
+  }
+
+  /* Soft card lift used on hoverable cards */
+  .card-lift {
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease, box-shadow 0.25s ease;
+  }
+  .card-lift:hover {
+    transform: translateY(-2px);
   }
 }
 
@@ -109,7 +175,18 @@
   }
 
   .skeleton {
-    @apply animate-pulse bg-zinc-800 rounded-xl;
+    position: relative;
+    overflow: hidden;
+    border-radius: 0.75rem;
+    background-color: rgb(var(--color-surface-light) / 0.6);
+  }
+  .skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.07), transparent);
+    animation: shimmer-sweep 1.6s ease-in-out infinite;
   }
 
   .icon-chip {
